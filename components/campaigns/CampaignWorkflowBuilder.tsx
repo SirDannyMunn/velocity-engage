@@ -27,6 +27,10 @@ import {
 import type { Campaign, CampaignStep, StepType, StepFormData } from '@engage/types/campaign-types';
 import { campaignApi } from '@engage/api/campaign-api';
 import { StepEditor } from './StepEditor';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/components/ui/utils';
 
 interface CampaignWorkflowBuilderProps {
   campaign: Campaign;
@@ -43,29 +47,29 @@ const STEP_ICONS: Record<StepType, React.ElementType> = {
 
 const STEP_COLORS: Record<StepType, { bg: string; border: string; icon: string }> = {
   invitation: { 
-    bg: 'bg-[var(--charcoal)]', 
-    border: 'border-[var(--steel-gray)]/20', 
-    icon: 'text-[var(--cyber-blue)]'
+    bg: 'bg-card', 
+    border: 'border-border', 
+    icon: 'text-blue-400'
   },
   message: { 
-    bg: 'bg-[var(--charcoal)]', 
-    border: 'border-[var(--steel-gray)]/20', 
-    icon: 'text-[var(--neon-lime)]'
+    bg: 'bg-card', 
+    border: 'border-border', 
+    icon: 'text-primary'
   },
   email: { 
-    bg: 'bg-[var(--charcoal)]', 
-    border: 'border-[var(--steel-gray)]/20', 
-    icon: 'text-[var(--cyber-blue)]'
+    bg: 'bg-card', 
+    border: 'border-border', 
+    icon: 'text-blue-400'
   },
   wait: { 
-    bg: 'bg-[var(--charcoal)]', 
-    border: 'border-[var(--steel-gray)]/20', 
-    icon: 'text-[var(--steel-gray)]'
+    bg: 'bg-card', 
+    border: 'border-border', 
+    icon: 'text-muted-foreground'
   },
   condition: { 
-    bg: 'bg-[var(--charcoal)]', 
-    border: 'border-[var(--steel-gray)]/20', 
-    icon: 'text-[var(--neon-lime)]'
+    bg: 'bg-card', 
+    border: 'border-border', 
+    icon: 'text-primary'
   },
 };
 
@@ -125,53 +129,55 @@ export const CampaignWorkflowBuilder: React.FC<CampaignWorkflowBuilderProps> = (
       <div className="max-w-2xl mx-auto">
         {/* Edit Link */}
         <div className="flex justify-end mb-4">
-          <button className="flex items-center gap-1 text-sm text-[var(--steel-gray)] hover:text-[var(--neon-lime)] transition-colors">
-            <Edit2 className="w-4 h-4" />
+          <Button variant="ghost" size="sm">
+            <Edit2 className="w-4 h-4 mr-1" />
             Edit Workflow
-          </button>
+          </Button>
         </div>
 
         {/* Input Source Node */}
         <div className="relative">
-          <div className="p-5 bg-[var(--charcoal)] border border-[var(--steel-gray)]/20 rounded-2xl hover:border-[var(--neon-lime)]/30 transition-all">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-[var(--neon-lime)]/10 rounded-xl">
-                <Target className="w-6 h-6 text-[var(--neon-lime)]" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-white">Input Source</h3>
-                  <button className="p-1.5 text-[var(--steel-gray)] hover:text-white hover:bg-[var(--steel-gray)]/20 rounded-lg transition-colors">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+          <Card className="hover:border-primary/30 transition-all">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <Target className="w-6 h-6 text-primary" />
                 </div>
-                <p className="text-sm text-[var(--steel-gray)] mt-1">{inputDescription}</p>
-                
-                {/* Agent list if applicable */}
-                {inputSource.type === 'agent' && inputSource.agent_ids && inputSource.agent_ids.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {inputSource.agent_ids.slice(0, 2).map((agentId, idx) => (
-                      <div key={agentId} className="flex items-center justify-between p-2.5 bg-[var(--void-black)] rounded-lg">
-                        <span className="text-sm text-white">Agent {idx + 1}</span>
-                        <span className="flex items-center gap-1.5 text-xs text-[var(--neon-lime)]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--neon-lime)] animate-pulse" />
-                          Running
-                        </span>
-                      </div>
-                    ))}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-foreground">Input Source</h3>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                )}
+                  <p className="text-sm text-muted-foreground mt-1">{inputDescription}</p>
+                  
+                  {/* Agent list if applicable */}
+                  {inputSource.type === 'agent' && inputSource.agent_ids && inputSource.agent_ids.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {inputSource.agent_ids.slice(0, 2).map((agentId, idx) => (
+                        <div key={agentId} className="flex items-center justify-between p-2.5 bg-background rounded-lg">
+                          <span className="text-sm text-foreground">Agent {idx + 1}</span>
+                          <span className="flex items-center gap-1.5 text-xs text-primary">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            Running
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                <div className="mt-3 text-xs text-[var(--steel-gray)]">
-                  {campaign.stats.total_contacts} contact(s) in campaign
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    {campaign.stats.total_contacts} contact(s) in campaign
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Connector Line */}
           <div className="flex justify-center py-2">
-            <div className="w-0.5 h-8 bg-[var(--steel-gray)]/30" />
+            <div className="w-0.5 h-8 bg-border" />
           </div>
         </div>
 
@@ -194,28 +200,29 @@ export const CampaignWorkflowBuilder: React.FC<CampaignWorkflowBuilderProps> = (
         {/* Add Step Button */}
         {!showAddStep && (
           <div className="flex justify-center pt-2">
-            <button
+            <Button
+              variant="outline"
               onClick={() => {
                 setAddStepAfter(null);
                 setShowAddStep(true);
               }}
-              className="group flex items-center gap-2 px-4 py-3 bg-[var(--charcoal)] border border-dashed border-[var(--steel-gray)]/30 rounded-xl hover:border-[var(--neon-lime)]/50 hover:bg-[var(--neon-lime)]/10 transition-all"
+              className="border-dashed hover:border-primary/50 hover:bg-primary/10"
             >
-              <Plus className="w-5 h-5 text-[var(--steel-gray)] group-hover:text-[var(--neon-lime)]" />
-              <span className="text-sm font-medium text-[var(--steel-gray)] group-hover:text-[var(--neon-lime)]">Add Step</span>
-            </button>
+              <Plus className="w-5 h-5 mr-2" />
+              Add Step
+            </Button>
           </div>
         )}
 
         {/* Completion Node */}
         <div className="flex justify-center py-4 mt-4">
-          <div className="flex items-center gap-3 px-5 py-3 bg-[var(--neon-lime)]/10 border border-[var(--neon-lime)]/30 rounded-xl">
-            <div className="p-1.5 bg-[var(--neon-lime)]/20 rounded-lg">
-              <Check className="w-4 h-4 text-[var(--neon-lime)]" />
+          <div className="flex items-center gap-3 px-5 py-3 bg-primary/10 border border-primary/30 rounded-xl">
+            <div className="p-1.5 bg-primary/20 rounded-lg">
+              <Check className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-[var(--neon-lime)]">Workflow Complete</p>
-              <p className="text-xs text-[var(--steel-gray)]">{campaign.stats.completed} contacts finished</p>
+              <p className="text-sm font-medium text-primary">Workflow Complete</p>
+              <p className="text-xs text-muted-foreground">{campaign.stats.completed} contacts finished</p>
             </div>
           </div>
         </div>
@@ -282,58 +289,58 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
       {/* Wait indicator */}
       {waitText && (
         <div className="flex justify-center -mt-2 mb-2">
-          <span className="px-3 py-1.5 bg-[var(--charcoal)] text-[var(--steel-gray)] text-xs font-medium rounded-full border border-[var(--steel-gray)]/20">
-            <Clock className="w-3 h-3 inline mr-1.5" />
+          <Badge variant="secondary" className="gap-1">
+            <Clock className="w-3 h-3" />
             {waitText}
-          </span>
+          </Badge>
         </div>
       )}
 
       {/* Step Card */}
-      <div className={`group relative p-5 ${colors.bg} border ${colors.border} rounded-2xl hover:border-[var(--neon-lime)]/30 hover:ring-2 hover:ring-[var(--neon-lime)]/10 transition-all`}>
-        <div className="flex items-start gap-4">
-          {/* Icon */}
-          <div className={`p-3 bg-[var(--void-black)] border border-[var(--steel-gray)]/20 rounded-xl`}>
-            <Icon className={`w-6 h-6 ${colors.icon}`} />
-          </div>
+      <Card className={cn('group', colors.bg, colors.border, 'hover:border-primary/30 hover:ring-2 hover:ring-primary/10 transition-all')}>
+        <CardContent className="p-5">
+          <div className="flex items-start gap-4">
+            {/* Icon */}
+            <div className="p-3 bg-background border border-border rounded-xl">
+              <Icon className={cn('w-6 h-6', colors.icon)} />
+            </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-[var(--void-black)] rounded text-xs text-[var(--steel-gray)]">
+                <Badge variant="secondary" className="text-xs">
                   Step {stepNumber}
-                </span>
-                <h3 className="font-semibold text-white">{step.name}</h3>
+                </Badge>
+                <h3 className="font-semibold text-foreground">{step.name}</h3>
               </div>
               
               {/* Actions */}
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={onEdit}
-                  className="p-1.5 text-[var(--steel-gray)] hover:text-white hover:bg-[var(--steel-gray)]/20 rounded-lg transition-colors"
-                >
+                <Button variant="ghost" size="icon" onClick={onEdit} className="h-8 w-8">
                   <Edit2 className="w-4 h-4" />
-                </button>
+                </Button>
                 <div className="relative">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowMenu(!showMenu)}
-                    className="p-1.5 text-[var(--steel-gray)] hover:text-white hover:bg-[var(--steel-gray)]/20 rounded-lg transition-colors"
+                    className="h-8 w-8"
                   >
                     <MoreVertical className="w-4 h-4" />
-                  </button>
+                  </Button>
                   {showMenu && (
-                    <div className="absolute right-0 top-full mt-1 w-40 bg-[var(--charcoal)] border border-[var(--steel-gray)]/20 rounded-lg shadow-xl z-10">
+                    <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border rounded-lg shadow-xl z-10">
                       <button
                         onClick={() => { onEdit(); setShowMenu(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-[var(--steel-gray)]/20 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                       >
                         <Edit2 className="w-4 h-4" />
                         Edit Step
                       </button>
                       <button
                         onClick={() => { onDelete(); setShowMenu(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--hot-pink)] hover:bg-[var(--hot-pink)]/10 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                         Delete Step
@@ -346,19 +353,19 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
 
             {/* Step Details */}
             {step.type === 'invitation' && (
-              <p className="text-sm text-[var(--steel-gray)] mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 {step.config.include_note ? 'Invitation with personalized note' : 'Invitation without message'}
               </p>
             )}
             {step.type === 'message' && step.config.message_template && (
-              <div className="mt-3 p-3 bg-[var(--void-black)] rounded-lg border border-[var(--steel-gray)]/10">
+              <div className="mt-3 p-3 bg-background rounded-lg border border-border">
                 {step.config.use_ai_personalization && (
-                  <div className="flex items-center gap-1.5 text-xs text-[var(--neon-lime)] mb-2">
+                  <div className="flex items-center gap-1.5 text-xs text-primary mb-2">
                     <Sparkles className="w-3.5 h-3.5" />
                     AI Personalized Message
                   </div>
                 )}
-                <p className="text-sm text-[var(--steel-gray)] line-clamp-2">
+                <p className="text-sm text-muted-foreground line-clamp-2">
                   {step.config.message_template}
                 </p>
               </div>
@@ -366,18 +373,18 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
 
             {/* Stats */}
             <div className="flex items-center gap-4 mt-3">
-              <div className="flex items-center gap-1.5 text-xs text-[var(--steel-gray)]">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Users className="w-3.5 h-3.5" />
                 {step.stats.sent} sent
               </div>
               {step.stats.replied !== undefined && step.stats.replied > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-[var(--neon-lime)]">
+                <div className="flex items-center gap-1.5 text-xs text-primary">
                   <MessageSquare className="w-3.5 h-3.5" />
                   {step.stats.replied} replied
                 </div>
               )}
               {step.stats.accepted !== undefined && step.stats.accepted > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-[var(--cyber-blue)]">
+                <div className="flex items-center gap-1.5 text-xs text-blue-400">
                   <Check className="w-3.5 h-3.5" />
                   {step.stats.accepted} accepted
                 </div>
@@ -385,24 +392,25 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
             </div>
 
             {/* View Contacts Button */}
-            <button className="mt-3 px-3 py-1.5 text-xs text-[var(--steel-gray)] bg-[var(--void-black)] hover:bg-[var(--steel-gray)]/10 rounded-lg transition-colors">
+            <Button variant="secondary" size="sm" className="mt-3">
               View Contacts
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Connector to next step */}
       {!isLast && (
         <div className="flex flex-col items-center py-2">
-          <div className="w-0.5 h-4 bg-[var(--steel-gray)]/30" />
+          <div className="w-0.5 h-4 bg-border" />
           <button
             onClick={onAddAfter}
-            className="p-1 bg-[var(--charcoal)] border border-[var(--steel-gray)]/20 rounded-full hover:border-[var(--neon-lime)]/50 hover:bg-[var(--neon-lime)]/20 transition-all group"
+            className="p-1 bg-card border border-border rounded-full hover:border-primary/50 hover:bg-primary/20 transition-all group"
           >
-            <Plus className="w-3 h-3 text-[var(--steel-gray)] group-hover:text-[var(--neon-lime)]" />
+            <Plus className="w-3 h-3 text-muted-foreground group-hover:text-primary" />
           </button>
-          <div className="w-0.5 h-4 bg-[var(--steel-gray)]/30" />
+          <div className="w-0.5 h-4 bg-border" />
         </div>
       )}
     </div>

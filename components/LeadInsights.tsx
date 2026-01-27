@@ -24,6 +24,30 @@ import {
   getSignalColors,
   formatSignalType,
 } from '../types/lead-watcher-types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { cn } from '@/components/ui/utils';
+import {
+  pageHeaderVariants,
+  headerIconVariants,
+  emptyStateVariants,
+} from '../styles/variants';
 
 interface LeadInsightsProps {
   onNavigate?: (page: string) => void;
@@ -89,16 +113,18 @@ export function LeadInsights({ onNavigate }: LeadInsightsProps) {
     subValue?: string;
     color: string;
   }) => (
-    <div className="p-5 bg-white/5 rounded-xl border border-white/10">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
-          <Icon className="w-5 h-5" />
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', color)}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <span className="text-sm text-muted-foreground">{label}</span>
         </div>
-        <span className="text-sm text-gray-400">{label}</span>
-      </div>
-      <p className="text-3xl font-bold text-white">{value}</p>
-      {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
-    </div>
+        <p className="text-3xl font-bold">{value}</p>
+        {subValue && <p className="text-sm text-muted-foreground/60 mt-1">{subValue}</p>}
+      </CardContent>
+    </Card>
   );
 
   // Generate last N days for headers
@@ -118,54 +144,53 @@ export function LeadInsights({ onNavigate }: LeadInsightsProps) {
       <div className="flex-shrink-0 border-b-[0.5px] border-border/15 bg-card/80 backdrop-blur-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center">
+            <div className={pageHeaderVariants()}>
+              <div className={headerIconVariants()}>
                 <LineChart className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Insights</h1>
-                <p className="text-sm text-gray-400">
+                <h1 className="text-xl font-bold">Insights</h1>
+                <p className="text-sm text-muted-foreground">
                   Lead generation performance analytics
                 </p>
               </div>
             </div>
 
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => loadInsights()}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+              <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+            </Button>
           </div>
 
           {/* Filters */}
           <div className="flex items-center gap-4">
-            <select
-              value={selectedIcpId}
-              onChange={(e) => setSelectedIcpId(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#10b981]/50"
-            >
-              <option value="">All ICP Profiles</option>
-              {icpProfiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.name}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedIcpId || 'all'} onValueChange={(value) => setSelectedIcpId(value === 'all' ? '' : value)}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="All ICP Profiles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ICP Profiles</SelectItem>
+                {icpProfiles.map((profile) => (
+                  <SelectItem key={profile.id} value={profile.id}>
+                    {profile.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg">
+            <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
               {[7, 14, 30].map((d) => (
-                <button
+                <Button
                   key={d}
+                  variant={days === d ? 'default' : 'ghost'}
+                  size="sm"
                   onClick={() => setDays(d)}
-                  className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                    days === d
-                      ? 'bg-[#10b981] text-black font-medium'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
                 >
                   {d}d
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -175,19 +200,16 @@ export function LeadInsights({ onNavigate }: LeadInsightsProps) {
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {loading && !metrics ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-[#10b981]" />
+          <div className={emptyStateVariants({ className: 'h-64' })}>
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <AlertCircle className="w-12 h-12 text-red-400" />
-            <p className="text-gray-400">{error}</p>
-            <button
-              onClick={() => loadInsights()}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
-            >
+          <div className={emptyStateVariants({ className: 'h-64 gap-4' })}>
+            <AlertCircle className="w-12 h-12 text-destructive" />
+            <p className="text-muted-foreground">{error}</p>
+            <Button variant="outline" onClick={() => loadInsights()}>
               Retry
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="space-y-8">
@@ -199,151 +221,147 @@ export function LeadInsights({ onNavigate }: LeadInsightsProps) {
                   label="Total Leads Generated"
                   value={metrics.total_leads_generated.toLocaleString()}
                   subValue={`Last ${days} days`}
-                  color="bg-[#10b981]/20 text-[#10b981]"
+                  color="bg-primary/20 text-primary"
                 />
                 <MetricCard
                   icon={TrendingUp}
                   label="Avg Leads Per Day"
                   value={metrics.avg_leads_per_day.toFixed(1)}
-                  color="bg-blue-500/20 text-blue-400"
+                  color="bg-blue-500/20 text-blue-500"
                 />
                 <MetricCard
                   icon={Zap}
                   label="Active Signals"
                   value={metrics.active_signals}
-                  color="bg-yellow-500/20 text-yellow-400"
+                  color="bg-yellow-500/20 text-yellow-500"
                 />
                 <MetricCard
                   icon={BarChart3}
                   label="Avg Conversion Rate"
                   value={`${(metrics.avg_conversion_rate * 100).toFixed(1)}%`}
-                  color="bg-purple-500/20 text-purple-400"
+                  color="bg-purple-500/20 text-purple-500"
                 />
               </div>
             )}
 
             {/* Daily Performance Table */}
             {dailyPerformance.length > 0 && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                <div className="px-5 py-4 border-b border-white/10">
-                  <h3 className="font-semibold text-white flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-gray-400" />
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Calendar className="w-5 h-5 text-muted-foreground" />
                     Daily Performance
-                  </h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        <th className="px-5 py-3">Agent</th>
-                        {getDayHeaders().map((day) => (
-                          <th key={day} className="px-3 py-3 text-center">
-                            {day}
-                          </th>
-                        ))}
-                        <th className="px-5 py-3 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {dailyPerformance.map((perf) => {
-                        const total = perf.daily_counts.reduce((sum, d) => sum + d.count, 0);
-                        return (
-                          <tr key={perf.agent_id} className="hover:bg-white/5">
-                            <td className="px-5 py-3">
-                              <span className="font-medium text-white">
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Agent</TableHead>
+                          {getDayHeaders().map((day) => (
+                            <TableHead key={day} className="text-center">
+                              {day}
+                            </TableHead>
+                          ))}
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dailyPerformance.map((perf) => {
+                          const total = perf.daily_counts.reduce((sum, d) => sum + d.count, 0);
+                          return (
+                            <TableRow key={perf.agent_id}>
+                              <TableCell className="font-medium">
                                 {perf.agent_name}
-                              </span>
-                            </td>
-                            {perf.daily_counts.map((day) => (
-                              <td key={day.date} className="px-3 py-3 text-center">
-                                <span
-                                  className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm ${
-                                    day.count > 0
-                                      ? 'bg-[#10b981]/20 text-[#10b981]'
-                                      : 'bg-white/5 text-gray-500'
-                                  }`}
-                                >
-                                  {day.count}
-                                </span>
-                              </td>
-                            ))}
-                            <td className="px-5 py-3 text-right">
-                              <span className="font-bold text-white">{total}</span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                              </TableCell>
+                              {perf.daily_counts.map((day) => (
+                                <TableCell key={day.date} className="text-center">
+                                  <span
+                                    className={cn(
+                                      'inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm',
+                                      day.count > 0
+                                        ? 'bg-primary/20 text-primary'
+                                        : 'bg-muted text-muted-foreground'
+                                    )}
+                                  >
+                                    {day.count}
+                                  </span>
+                                </TableCell>
+                              ))}
+                              <TableCell className="text-right font-bold">
+                                {total}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Signals Performance */}
             {signalsPerformance.length > 0 && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                <div className="px-5 py-4 border-b border-white/10">
-                  <h3 className="font-semibold text-white flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-gray-400" />
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Zap className="w-5 h-5 text-muted-foreground" />
                     Signals Performance
-                  </h3>
-                </div>
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      <th className="px-5 py-3">Signal</th>
-                      <th className="px-5 py-3">Type</th>
-                      <th className="px-5 py-3 text-right">Leads Generated</th>
-                      <th className="px-5 py-3 text-right">% of Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {signalsPerformance.map((signal) => {
-                      const colors = getSignalColors(signal.signal_type);
-                      return (
-                        <tr key={signal.signal_type} className="hover:bg-white/5">
-                          <td className="px-5 py-3">
-                            <span className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg ${colors.bg}`}>
-                              <span className={`font-medium ${colors.text}`}>
-                                {signal.signal_label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Signal</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead className="text-right">Leads Generated</TableHead>
+                        <TableHead className="text-right">% of Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {signalsPerformance.map((signal) => {
+                        const colors = getSignalColors(signal.signal_type);
+                        return (
+                          <TableRow key={signal.signal_type}>
+                            <TableCell>
+                              <span className={cn('inline-flex items-center gap-2 px-2.5 py-1 rounded-lg', colors.bg)}>
+                                <span className={cn('font-medium', colors.text)}>
+                                  {signal.signal_label}
+                                </span>
                               </span>
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-gray-400">
-                            {formatSignalType(signal.signal_type)}
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            <span className="font-medium text-white">
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatSignalType(signal.signal_type)}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
                               {signal.leads_generated.toLocaleString()}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-[#10b981] rounded-full"
-                                  style={{ width: `${signal.percentage}%` }}
-                                />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Progress value={signal.percentage} className="w-16 h-2" />
+                                <span className="text-muted-foreground text-sm w-12 text-right">
+                                  {signal.percentage.toFixed(1)}%
+                                </span>
                               </div>
-                              <span className="text-gray-400 text-sm w-12 text-right">
-                                {signal.percentage.toFixed(1)}%
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             )}
 
             {/* Empty State */}
             {(!dailyPerformance.length && !signalsPerformance.length) && !loading && (
-              <div className="flex flex-col items-center justify-center h-64">
-                <LineChart className="w-12 h-12 text-gray-600 mb-4" />
-                <p className="text-gray-400">No performance data available</p>
-                <p className="text-sm text-gray-500 mt-1">
+              <div className={emptyStateVariants({ className: 'h-64' })}>
+                <LineChart className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">No performance data available</p>
+                <p className="text-sm text-muted-foreground/60 mt-1">
                   Start running search agents to see analytics
                 </p>
               </div>

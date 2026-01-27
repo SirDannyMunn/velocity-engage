@@ -18,6 +18,11 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import type { StepType } from '@engage/types/campaign-types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/components/ui/utils';
+import { emptyStateVariants } from '@engage/styles/variants';
 
 interface CampaignScheduledProps {
   campaignId: string;
@@ -42,12 +47,12 @@ const STEP_ICONS: Record<StepType, React.ElementType> = {
   condition: AlertCircle,
 };
 
-const STEP_COLORS: Record<StepType, { bg: string; text: string }> = {
-  invitation: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  message: { bg: 'bg-purple-500/20', text: 'text-purple-400' },
-  email: { bg: 'bg-amber-500/20', text: 'text-amber-400' },
-  wait: { bg: 'bg-zinc-500/20', text: 'text-zinc-400' },
-  condition: { bg: 'bg-pink-500/20', text: 'text-pink-400' },
+const STEP_VARIANTS: Record<StepType, 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'destructive'> = {
+  invitation: 'default',
+  message: 'secondary',
+  email: 'warning',
+  wait: 'outline',
+  condition: 'destructive',
 };
 
 export const CampaignScheduled: React.FC<CampaignScheduledProps> = ({ campaignId }) => {
@@ -130,18 +135,18 @@ export const CampaignScheduled: React.FC<CampaignScheduledProps> = ({ campaignId
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+      <div className={emptyStateVariants()}>
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
 
   if (actions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-zinc-500">
-        <Calendar className="w-12 h-12 mb-3 text-zinc-600" />
+      <div className={emptyStateVariants()}>
+        <Calendar className="w-12 h-12 mb-3 text-muted-foreground" />
         <p className="font-medium">No scheduled actions</p>
-        <p className="text-sm mt-1">Actions will appear here when your campaign is running</p>
+        <p className="text-sm mt-1 text-muted-foreground">Actions will appear here when your campaign is running</p>
       </div>
     );
   }
@@ -151,14 +156,14 @@ export const CampaignScheduled: React.FC<CampaignScheduledProps> = ({ campaignId
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-white">Scheduled Actions</h2>
-          <p className="text-sm text-zinc-400 mt-0.5">{actions.length} actions queued</p>
+          <h2 className="text-lg font-semibold text-foreground">Scheduled Actions</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{actions.length} actions queued</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
+          <Button variant="ghost" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -167,71 +172,86 @@ export const CampaignScheduled: React.FC<CampaignScheduledProps> = ({ campaignId
         {Object.entries(groupedByDate).map(([date, dayActions]) => (
           <div key={date}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Calendar className="w-4 h-4 text-purple-400" />
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <Calendar className="w-4 h-4 text-primary" />
               </div>
-              <h3 className="font-medium text-white">
+              <h3 className="font-medium text-foreground">
                 {new Date(date).toLocaleDateString('en-US', { 
                   weekday: 'long',
                   month: 'short',
                   day: 'numeric'
                 })}
               </h3>
-              <span className="text-sm text-zinc-500">({dayActions.length} actions)</span>
+              <span className="text-sm text-muted-foreground">({dayActions.length} actions)</span>
             </div>
 
-            <div className="relative ml-5 pl-6 border-l-2 border-zinc-700 space-y-3">
+            <div className="relative ml-5 pl-6 border-l-2 border-border space-y-3">
               {dayActions.map((action) => {
                 const Icon = STEP_ICONS[action.step_type];
-                const colors = STEP_COLORS[action.step_type];
+                const variant = STEP_VARIANTS[action.step_type];
                 
                 return (
-                  <div 
+                  <Card 
                     key={action.id}
-                    className="relative flex items-center gap-4 p-4 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-zinc-700/50 rounded-xl group hover:border-purple-500/50 transition-all"
+                    className="relative group hover:border-primary/50 transition-all"
                   >
                     {/* Timeline dot */}
-                    <div className="absolute -left-[33px] w-4 h-4 bg-zinc-900 border-2 border-zinc-700 rounded-full group-hover:border-purple-500 transition-colors" />
+                    <div className="absolute -left-[33px] w-4 h-4 bg-background border-2 border-border rounded-full group-hover:border-primary transition-colors" />
                     
-                    {/* Step icon */}
-                    <div className={`p-2.5 ${colors.bg} rounded-xl`}>
-                      <Icon className={`w-5 h-5 ${colors.text}`} />
-                    </div>
-
-                    {/* Contact info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-white">{action.contact_name}</p>
-                        {action.contact_company && (
-                          <span className="text-sm text-zinc-500">at {action.contact_company}</span>
-                        )}
+                    <CardContent className="p-4 flex items-center gap-4">
+                      {/* Step icon */}
+                      <div className={cn(
+                        "p-2.5 rounded-xl",
+                        variant === 'default' && "bg-primary/20",
+                        variant === 'secondary' && "bg-secondary",
+                        variant === 'warning' && "bg-yellow-500/20",
+                        variant === 'outline' && "bg-muted"
+                      )}>
+                        <Icon className={cn(
+                          "w-5 h-5",
+                          variant === 'default' && "text-primary",
+                          variant === 'secondary' && "text-secondary-foreground",
+                          variant === 'warning' && "text-yellow-500",
+                          variant === 'outline' && "text-muted-foreground"
+                        )} />
                       </div>
-                      <p className="text-sm text-zinc-400 mt-0.5">{action.step_name}</p>
-                    </div>
 
-                    {/* Time */}
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-zinc-500" />
-                      <span className="text-sm text-zinc-400">{getTimeLabel(action.scheduled_at)}</span>
-                    </div>
+                      {/* Contact info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">{action.contact_name}</p>
+                          {action.contact_company && (
+                            <span className="text-sm text-muted-foreground">at {action.contact_company}</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-0.5">{action.step_name}</p>
+                      </div>
 
-                    {/* Status */}
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                      action.status === 'processing' 
-                        ? 'bg-blue-500/20 text-blue-400' 
-                        : action.status === 'waiting'
-                        ? 'bg-amber-500/20 text-amber-400'
-                        : 'bg-zinc-500/20 text-zinc-400'
-                    }`}>
-                      {action.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin mr-1 inline" />}
-                      {action.status.charAt(0).toUpperCase() + action.status.slice(1)}
-                    </span>
+                      {/* Time */}
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">{getTimeLabel(action.scheduled_at)}</span>
+                      </div>
 
-                    {/* Actions */}
-                    <button className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                  </div>
+                      {/* Status */}
+                      <Badge variant={
+                        action.status === 'processing' ? 'default' :
+                        action.status === 'waiting' ? 'warning' : 'secondary'
+                      }>
+                        {action.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                        {action.status.charAt(0).toUpperCase() + action.status.slice(1)}
+                      </Badge>
+
+                      {/* Actions */}
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="opacity-0 group-hover:opacity-100"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>

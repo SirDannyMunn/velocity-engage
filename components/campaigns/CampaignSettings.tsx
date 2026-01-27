@@ -20,6 +20,12 @@ import {
 import type { CampaignSettings as SettingsType, Campaign } from '@engage/types/campaign-types';
 import { DEFAULT_CAMPAIGN_SETTINGS } from '@engage/types/campaign-types';
 import { campaignApi } from '@engage/api/campaign-api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/components/ui/utils';
 
 interface CampaignSettingsProps {
   campaign: Campaign;
@@ -66,29 +72,27 @@ export const CampaignSettings: React.FC<CampaignSettingsProps> = ({ campaign, on
           description="Control how many actions are performed each day"
         >
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-zinc-400 mb-2">Invitations per day</label>
-              <input
+            <div className="space-y-2">
+              <Label>Invitations per day</Label>
+              <Input
                 type="number"
                 value={settings.max_invitations_per_day}
                 onChange={(e) => updateSetting('max_invitations_per_day', parseInt(e.target.value) || 0)}
                 min={1}
                 max={100}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
               />
-              <p className="text-xs text-zinc-500 mt-1">LinkedIn recommends 50-100/day</p>
+              <p className="text-xs text-muted-foreground">LinkedIn recommends 50-100/day</p>
             </div>
-            <div>
-              <label className="block text-sm text-zinc-400 mb-2">Messages per day</label>
-              <input
+            <div className="space-y-2">
+              <Label>Messages per day</Label>
+              <Input
                 type="number"
                 value={settings.max_messages_per_day}
                 onChange={(e) => updateSetting('max_messages_per_day', parseInt(e.target.value) || 0)}
                 min={1}
                 max={150}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
               />
-              <p className="text-xs text-zinc-500 mt-1">Stay under 150 for safety</p>
+              <p className="text-xs text-muted-foreground">Stay under 150 for safety</p>
             </div>
           </div>
         </SettingSection>
@@ -100,22 +104,20 @@ export const CampaignSettings: React.FC<CampaignSettingsProps> = ({ campaign, on
           description="Only send messages during these hours (recipient's timezone)"
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1">
-              <label className="block text-sm text-zinc-400 mb-2">Start Time</label>
-              <input
+            <div className="flex-1 space-y-2">
+              <Label>Start Time</Label>
+              <Input
                 type="time"
                 value={settings.send_window_start}
                 onChange={(e) => updateSetting('send_window_start', e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
               />
             </div>
-            <div className="flex-1">
-              <label className="block text-sm text-zinc-400 mb-2">End Time</label>
-              <input
+            <div className="flex-1 space-y-2">
+              <Label>End Time</Label>
+              <Input
                 type="time"
                 value={settings.send_window_end}
                 onChange={(e) => updateSetting('send_window_end', e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
@@ -131,8 +133,10 @@ export const CampaignSettings: React.FC<CampaignSettingsProps> = ({ campaign, on
             {DAYS.map((day) => {
               const isActive = settings.send_days.includes(day.toLowerCase());
               return (
-                <button
+                <Button
                   key={day}
+                  variant={isActive ? 'default' : 'outline'}
+                  size="sm"
                   onClick={() => {
                     const dayLower = day.toLowerCase();
                     const newDays = isActive
@@ -140,14 +144,9 @@ export const CampaignSettings: React.FC<CampaignSettingsProps> = ({ campaign, on
                       : [...settings.send_days, dayLower];
                     updateSetting('send_days', newDays);
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
-                      : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-zinc-600'
-                  }`}
                 >
                   {day.slice(0, 3)}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -188,26 +187,24 @@ export const CampaignSettings: React.FC<CampaignSettingsProps> = ({ campaign, on
           description="Add random delays to appear more natural"
         >
           <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label className="block text-sm text-zinc-400 mb-2">Min delay between actions (seconds)</label>
-              <input
+            <div className="flex-1 space-y-2">
+              <Label>Min delay between actions (seconds)</Label>
+              <Input
                 type="number"
                 value={settings.delay_between_actions_min}
                 onChange={(e) => updateSetting('delay_between_actions_min', parseInt(e.target.value) || 0)}
                 min={30}
                 max={300}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
               />
             </div>
-            <div className="flex-1">
-              <label className="block text-sm text-zinc-400 mb-2">Max delay (seconds)</label>
-              <input
+            <div className="flex-1 space-y-2">
+              <Label>Max delay (seconds)</Label>
+              <Input
                 type="number"
                 value={settings.delay_between_actions_max}
                 onChange={(e) => updateSetting('delay_between_actions_max', parseInt(e.target.value) || 0)}
                 min={60}
                 max={600}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
@@ -238,18 +235,14 @@ export const CampaignSettings: React.FC<CampaignSettingsProps> = ({ campaign, on
         {/* Save Button */}
         {hasChanges && (
           <div className="sticky bottom-4 flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50"
-            >
+            <Button onClick={handleSave} disabled={saving}>
               {saving ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
               ) : (
-                <Save className="w-5 h-5" />
+                <Save className="w-5 h-5 mr-2" />
               )}
               Save Changes
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -266,18 +259,20 @@ interface SettingSectionProps {
 }
 
 const SettingSection: React.FC<SettingSectionProps> = ({ icon: Icon, title, description, children }) => (
-  <div className="p-5 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-zinc-700/50 rounded-2xl">
-    <div className="flex items-start gap-3 mb-4">
-      <div className="p-2 bg-purple-500/20 rounded-xl">
-        <Icon className="w-5 h-5 text-purple-400" />
+  <Card>
+    <CardContent className="p-5">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="p-2 bg-primary/20 rounded-xl">
+          <Icon className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground">{title}</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+        </div>
       </div>
-      <div>
-        <h3 className="font-semibold text-white">{title}</h3>
-        <p className="text-sm text-zinc-400 mt-0.5">{description}</p>
-      </div>
-    </div>
-    {children}
-  </div>
+      {children}
+    </CardContent>
+  </Card>
 );
 
 // Toggle Component
@@ -289,23 +284,12 @@ interface ToggleProps {
 }
 
 const Toggle: React.FC<ToggleProps> = ({ label, description, checked, onChange }) => (
-  <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
     <div>
-      <p className="font-medium text-white text-sm">{label}</p>
-      <p className="text-xs text-zinc-500">{description}</p>
+      <p className="font-medium text-foreground text-sm">{label}</p>
+      <p className="text-xs text-muted-foreground">{description}</p>
     </div>
-    <button
-      onClick={() => onChange(!checked)}
-      className={`relative w-11 h-6 rounded-full transition-colors ${
-        checked ? 'bg-purple-500' : 'bg-zinc-600'
-      }`}
-    >
-      <div
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
-    </button>
+    <Switch checked={checked} onCheckedChange={onChange} />
   </div>
 );
 

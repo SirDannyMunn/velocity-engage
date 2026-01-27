@@ -41,6 +41,20 @@ import {
   CANADA_PROVINCE_OPTIONS,
 } from '../types/lead-form-options';
 import CompetitorManager from './CompetitorManager';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/components/ui/utils';
+import {
+  pageHeaderVariants,
+  headerIconVariants,
+  emptyStateVariants,
+} from '../styles/variants';
 
 interface IcpProfileEditorProps {
   profileId?: string;
@@ -65,29 +79,34 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-white/10 rounded-xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <Icon className="w-5 h-5 text-[#10b981]" />
-          <span className="font-medium text-white">{title}</span>
-          {badge !== undefined && badge > 0 && (
-            <span className="px-2 py-0.5 bg-[#10b981]/20 text-[#10b981] text-xs rounded-full">
-              {badge} selected
-            </span>
-          )}
-        </div>
-        {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-gray-400" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400" />
-        )}
-      </button>
-      {isOpen && <div className="p-5 bg-black/20">{children}</div>}
-    </div>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted/80 transition-colors rounded-t-lg"
+          >
+            <div className="flex items-center gap-3">
+              <Icon className="w-5 h-5 text-primary" />
+              <span className="font-medium">{title}</span>
+              {badge !== undefined && badge > 0 && (
+                <Badge variant="secondary" className="bg-primary/20 text-primary">
+                  {badge} selected
+                </Badge>
+              )}
+            </div>
+            {isOpen ? (
+              <ChevronUp className="w-5 h-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            )}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="p-5 bg-background/50">{children}</CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 
@@ -116,13 +135,13 @@ function SearchableMultiSelect({
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-        <input
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#10b981]/50"
+          className="pl-10"
         />
       </div>
       <div
@@ -134,11 +153,12 @@ function SearchableMultiSelect({
             key={option}
             type="button"
             onClick={() => onToggle(option)}
-            className={`px-3 py-2 rounded-lg text-sm text-left transition-colors truncate ${
+            className={cn(
+              'px-3 py-2 rounded-lg text-sm text-left transition-colors truncate border',
               selected.includes(option)
-                ? 'bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30'
-                : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
-            }`}
+                ? 'bg-primary/20 text-primary border-primary/30'
+                : 'bg-muted text-muted-foreground border-transparent hover:bg-muted/80'
+            )}
             title={option}
           >
             {option}
@@ -146,21 +166,22 @@ function SearchableMultiSelect({
         ))}
       </div>
       {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
           {selected.map((item) => (
-            <span
+            <Badge
               key={item}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#10b981]/10 text-[#10b981] rounded-lg text-sm"
+              variant="secondary"
+              className="bg-primary/10 text-primary gap-1.5"
             >
               {item}
               <button
                 type="button"
                 onClick={() => onToggle(item)}
-                className="hover:text-white transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
       )}
@@ -190,11 +211,12 @@ function OptionGrid({
           key={option}
           type="button"
           onClick={() => onToggle(option)}
-          className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+          className={cn(
+            'px-3 py-2 rounded-lg text-sm text-left transition-colors border',
             selected.includes(option)
-              ? 'bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30'
-              : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
-          }`}
+              ? 'bg-primary/20 text-primary border-primary/30'
+              : 'bg-muted text-muted-foreground border-transparent hover:bg-muted/80'
+          )}
         >
           {option}
         </button>
@@ -225,10 +247,10 @@ function TagInputField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-400">{label}</label>
+      <Label>{label}</Label>
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <input
+          <Input
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -239,7 +261,6 @@ function TagInputField({
               }
             }}
             placeholder={placeholder}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#10b981]/50"
             list={`${label}-suggestions`}
           />
           {suggestions && (
@@ -250,30 +271,32 @@ function TagInputField({
             </datalist>
           )}
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon"
           onClick={onAdd}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
-            <span
+            <Badge
               key={tag}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#10b981]/10 text-[#10b981] rounded-lg text-sm"
+              variant="secondary"
+              className="bg-primary/10 text-primary gap-1.5"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => onRemove(tag)}
-                className="hover:text-white transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
       )}
@@ -432,8 +455,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#10b981]" />
+      <div className={emptyStateVariants({ className: 'flex-1' })}>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -445,26 +468,27 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => onNavigate?.('engage-icp')}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
               >
                 <ArrowLeft className="w-5 h-5" />
-              </button>
+              </Button>
               <div>
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-xl font-bold">
                   {isNew ? 'Create ICP Profile' : 'Edit ICP Profile'}
                 </h1>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   Configure lead search criteria for Apify scraper
                 </p>
               </div>
             </div>
 
-            <button
+            <Button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#10b981] to-emerald-500 hover:from-[#0d9668] hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+              className="gap-2"
             >
               {saving ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -472,7 +496,7 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
                 <Save className="w-5 h-5" />
               )}
               Save Profile
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -481,48 +505,46 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {error && (
-            <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400">
+            <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/30 rounded-xl text-destructive">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               {error}
             </div>
           )}
 
           {/* Profile Name */}
-          <div className="p-5 bg-white/5 rounded-xl border border-white/10">
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Profile Name *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., SaaS Founders, Enterprise IT Directors"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#10b981]/50 text-lg"
-            />
-          </div>
+          <Card>
+            <CardContent className="p-5">
+              <div className="space-y-2">
+                <Label htmlFor="profile-name">Profile Name *</Label>
+                <Input
+                  id="profile-name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., SaaS Founders, Enterprise IT Directors"
+                  className="text-lg"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Active Toggle */}
-          <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-            <div>
-              <p className="font-medium text-white">Active Status</p>
-              <p className="text-sm text-gray-400">
-                Active profiles will be used for lead searches
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
-              className={`w-12 h-6 rounded-full transition-colors ${
-                formData.is_active ? 'bg-[#10b981]' : 'bg-gray-600'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-white shadow-sm transform transition-transform ${
-                  formData.is_active ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
-          </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Active Status</p>
+                  <p className="text-sm text-muted-foreground">
+                    Active profiles will be used for lead searches
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Person Criteria */}
           <CollapsibleSection
@@ -547,10 +569,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
               />
 
               {/* Seniority */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Seniority Level
-                </label>
+              <div className="space-y-3">
+                <Label>Seniority Level</Label>
                 <OptionGrid
                   options={SENIORITY_OPTIONS}
                   selected={formData.definition.seniority || []}
@@ -560,10 +580,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
               </div>
 
               {/* Functional Area */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Functional Area / Department
-                </label>
+              <div className="space-y-3">
+                <Label>Functional Area / Department</Label>
                 <SearchableMultiSelect
                   options={FUNCTIONAL_OPTIONS}
                   selected={formData.definition.functional || []}
@@ -581,10 +599,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
             badge={countSelected(['personCountry', 'personState'])}
           >
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Country
-                </label>
+              <div className="space-y-3">
+                <Label>Country</Label>
                 <SearchableMultiSelect
                   options={COUNTRY_OPTIONS}
                   selected={formData.definition.personCountry || []}
@@ -594,10 +610,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  State / Region (US & Canada)
-                </label>
+              <div className="space-y-3">
+                <Label>State / Region (US & Canada)</Label>
                 <SearchableMultiSelect
                   options={[...US_STATE_OPTIONS, ...CANADA_PROVINCE_OPTIONS]}
                   selected={formData.definition.personState || []}
@@ -617,10 +631,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
           >
             <div className="space-y-6">
               {/* Industry */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Industry
-                </label>
+              <div className="space-y-3">
+                <Label>Industry</Label>
                 <SearchableMultiSelect
                   options={INDUSTRY_OPTIONS}
                   selected={formData.definition.industry || []}
@@ -645,10 +657,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
               />
 
               {/* Employee Size */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Employee Count
-                </label>
+              <div className="space-y-3">
+                <Label>Employee Count</Label>
                 <OptionGrid
                   options={COMPANY_EMPLOYEE_SIZE_OPTIONS}
                   selected={formData.definition.companyEmployeeSize || []}
@@ -658,10 +668,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
               </div>
 
               {/* Business Model */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Business Model
-                </label>
+              <div className="space-y-3">
+                <Label>Business Model</Label>
                 <OptionGrid
                   options={BUSINESS_MODEL_OPTIONS}
                   selected={formData.definition.businessModel || []}
@@ -671,10 +679,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
               </div>
 
               {/* Revenue */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Revenue Range
-                </label>
+              <div className="space-y-3">
+                <Label>Revenue Range</Label>
                 <OptionGrid
                   options={REVENUE_OPTIONS}
                   selected={formData.definition.revenue || []}
@@ -706,10 +712,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
             badge={countSelected(['companyCountry', 'companyState'])}
           >
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Company HQ Country
-                </label>
+              <div className="space-y-3">
+                <Label>Company HQ Country</Label>
                 <SearchableMultiSelect
                   options={COUNTRY_OPTIONS}
                   selected={formData.definition.companyCountry || []}
@@ -719,10 +723,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Company HQ State / Region (US & Canada)
-                </label>
+              <div className="space-y-3">
+                <Label>Company HQ State / Region (US & Canada)</Label>
                 <SearchableMultiSelect
                   options={[...US_STATE_OPTIONS, ...CANADA_PROVINCE_OPTIONS]}
                   selected={formData.definition.companyState || []}
@@ -741,10 +743,8 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
             badge={countSelected(['fundingType'])}
           >
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-3">
-                  Funding Type
-                </label>
+              <div className="space-y-3">
+                <Label>Funding Type</Label>
                 <SearchableMultiSelect
                   options={FUNDING_TYPE_OPTIONS}
                   selected={formData.definition.fundingType || []}
@@ -755,26 +755,22 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Funding From Date
-                  </label>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="funding-from">Funding From Date</Label>
+                  <Input
+                    id="funding-from"
                     type="date"
                     value={formData.definition.fundingFromDate || ''}
                     onChange={(e) => updateDefinition('fundingFromDate', e.target.value || undefined)}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#10b981]/50"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Funding To Date
-                  </label>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="funding-to">Funding To Date</Label>
+                  <Input
+                    id="funding-to"
                     type="date"
                     value={formData.definition.fundingToDate || ''}
                     onChange={(e) => updateDefinition('fundingToDate', e.target.value || undefined)}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#10b981]/50"
                   />
                 </div>
               </div>
@@ -785,53 +781,43 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
           <CollapsibleSection title="Search Options" icon={Filter}>
             <div className="space-y-6">
               {/* Include Emails */}
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="font-medium text-white">Include Email Addresses</p>
-                    <p className="text-sm text-gray-400">
-                      Fetch verified email addresses for leads
-                    </p>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">Include Email Addresses</p>
+                        <p className="text-sm text-muted-foreground">
+                          Fetch verified email addresses for leads
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={formData.definition.includeEmails || false}
+                      onCheckedChange={(checked) => updateDefinition('includeEmails', checked)}
+                    />
                   </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateDefinition('includeEmails', !formData.definition.includeEmails)
-                  }
-                  className={`w-12 h-6 rounded-full transition-colors ${
-                    formData.definition.includeEmails ? 'bg-[#10b981]' : 'bg-gray-600'
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 rounded-full bg-white shadow-sm transform transition-transform ${
-                      formData.definition.includeEmails ? 'translate-x-6' : 'translate-x-0.5'
-                    }`}
-                  />
-                </button>
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Total Results */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Maximum Results per Search
-                </label>
+              <div className="space-y-3">
+                <Label>Maximum Results per Search</Label>
                 <div className="flex items-center gap-4">
-                  <input
-                    type="range"
+                  <Slider
                     min={10}
                     max={500}
                     step={10}
-                    value={formData.definition.totalResults || 100}
-                    onChange={(e) => updateDefinition('totalResults', parseInt(e.target.value))}
-                    className="flex-1 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#10b981]"
+                    value={[formData.definition.totalResults || 100]}
+                    onValueChange={(value) => updateDefinition('totalResults', value[0])}
+                    className="flex-1"
                   />
-                  <span className="w-16 text-center text-white font-medium">
+                  <span className="w-16 text-center font-medium">
                     {formData.definition.totalResults || 100}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground">
                   Higher values will consume more Apify credits per search
                 </p>
               </div>
@@ -845,12 +831,10 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
             badge={countSelected(['excluded_domains', 'excluded_keywords'])}
           >
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Domains to Exclude
-                </label>
+              <div className="space-y-2">
+                <Label>Domains to Exclude</Label>
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={excludedDomainInput}
                     onChange={(e) => setExcludedDomainInput(e.target.value)}
@@ -862,46 +846,47 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
                       }
                     }}
                     placeholder="e.g., competitor.com"
-                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50"
+                    className="flex-1"
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={() => {
                       addTag('excluded_domains', excludedDomainInput);
                       setExcludedDomainInput('');
                     }}
-                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                    className="text-destructive hover:bg-destructive/10"
                   >
                     <Plus className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
                 {(formData.definition.excluded_domains || []).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {(formData.definition.excluded_domains || []).map((tag) => (
-                      <span
+                      <Badge
                         key={tag}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-400 rounded-lg text-sm"
+                        variant="secondary"
+                        className="bg-destructive/10 text-destructive gap-1.5"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => removeTag('excluded_domains', tag)}
-                          className="hover:text-white transition-colors"
+                          className="hover:text-foreground transition-colors"
                         >
                           <X className="w-3 h-3" />
                         </button>
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Keywords to Exclude
-                </label>
+              <div className="space-y-2">
+                <Label>Keywords to Exclude</Label>
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={excludedKeywordInput}
                     onChange={(e) => setExcludedKeywordInput(e.target.value)}
@@ -913,35 +898,38 @@ export function IcpProfileEditor({ profileId, onNavigate, onSave }: IcpProfileEd
                       }
                     }}
                     placeholder="e.g., freelancer, student"
-                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50"
+                    className="flex-1"
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={() => {
                       addTag('excluded_keywords', excludedKeywordInput);
                       setExcludedKeywordInput('');
                     }}
-                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                    className="text-destructive hover:bg-destructive/10"
                   >
                     <Plus className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
                 {(formData.definition.excluded_keywords || []).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {(formData.definition.excluded_keywords || []).map((tag) => (
-                      <span
+                      <Badge
                         key={tag}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-400 rounded-lg text-sm"
+                        variant="secondary"
+                        className="bg-destructive/10 text-destructive gap-1.5"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => removeTag('excluded_keywords', tag)}
-                          className="hover:text-white transition-colors"
+                          className="hover:text-foreground transition-colors"
                         >
                           <X className="w-3 h-3" />
                         </button>
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 )}

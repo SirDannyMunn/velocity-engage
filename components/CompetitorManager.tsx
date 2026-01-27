@@ -20,6 +20,15 @@ import {
 } from 'lucide-react';
 import { leadWatcherApi } from '../api/lead-watcher-api';
 import type { Competitor, CompetitorFormData } from '../types/lead-watcher-types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/components/ui/utils';
+import { emptyStateVariants } from '../styles/variants';
 
 interface CompetitorManagerProps {
   icpProfileId: string;
@@ -162,114 +171,114 @@ export const CompetitorManager: React.FC<CompetitorManagerProps> = ({
     const percent = (score ?? 0) * 100;
     return (
       <div className="flex items-center gap-2">
-        <div className="w-20 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-emerald-500 rounded-full transition-all"
-            style={{ width: `${percent}%` }}
-          />
-        </div>
-        <span className="text-xs text-zinc-400">{percent.toFixed(0)}%</span>
+        <Progress value={percent} className="w-20 h-1.5" />
+        <span className="text-xs text-muted-foreground">{percent.toFixed(0)}%</span>
       </div>
     );
   };
 
   const renderCompetitorCard = (competitor: Competitor, showActions: boolean = false) => (
-    <div 
-      key={competitor.id}
-      className="p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-lg hover:border-zinc-600/50 transition-colors"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Building2 className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-            <span className="font-medium text-white truncate">{competitor.name}</span>
-            {competitor.source === 'ai_inferred' && (
-              <span className="px-1.5 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">
-                AI Suggested
-              </span>
-            )}
-          </div>
-          
-          {/* Links */}
-          <div className="flex items-center gap-3 text-sm text-zinc-400 mt-2">
-            {competitor.linkedin_url && (
-              <a 
-                href={competitor.linkedin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-blue-400 transition-colors"
-              >
-                <LinkIcon className="w-3 h-3" />
-                LinkedIn
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
-            {competitor.website && (
-              <a 
-                href={competitor.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-blue-400 transition-colors"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Website
-              </a>
-            )}
-          </div>
-
-          {/* AI Reason */}
-          {competitor.source === 'ai_inferred' && competitor.source_metadata?.inference_reason && (
-            <p className="text-xs text-zinc-500 mt-2 italic">
-              "{competitor.source_metadata.inference_reason}"
-            </p>
-          )}
-
-          {/* Confidence score for AI suggestions */}
-          {competitor.source === 'ai_inferred' && competitor.confidence_score && (
-            <div className="mt-2">
-              {renderConfidenceBar(competitor.confidence_score)}
+    <Card key={competitor.id} className="hover:border-border/80 transition-colors">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="font-medium truncate">{competitor.name}</span>
+              {competitor.source === 'ai_inferred' && (
+                <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                  AI Suggested
+                </Badge>
+              )}
             </div>
-          )}
-        </div>
+            
+            {/* Links */}
+            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
+              {competitor.linkedin_url && (
+                <a 
+                  href={competitor.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+                >
+                  <LinkIcon className="w-3 h-3" />
+                  LinkedIn
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {competitor.website && (
+                <a 
+                  href={competitor.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Website
+                </a>
+              )}
+            </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          {showActions && competitor.approval_status === 'pending' && (
-            <>
-              <button
-                onClick={() => handleApprove(competitor.id)}
-                className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
-                title="Approve"
+            {/* AI Reason */}
+            {competitor.source === 'ai_inferred' && competitor.source_metadata?.inference_reason && (
+              <p className="text-xs text-muted-foreground/70 mt-2 italic">
+                "{competitor.source_metadata.inference_reason}"
+              </p>
+            )}
+
+            {/* Confidence score for AI suggestions */}
+            {competitor.source === 'ai_inferred' && competitor.confidence_score && (
+              <div className="mt-2">
+                {renderConfidenceBar(competitor.confidence_score)}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {showActions && competitor.approval_status === 'pending' && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleApprove(competitor.id)}
+                  className="h-8 w-8 bg-primary/20 text-primary hover:bg-primary/30"
+                  title="Approve"
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleReject(competitor.id)}
+                  className="h-8 w-8 bg-destructive/20 text-destructive hover:bg-destructive/30"
+                  title="Reject"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+            {competitor.approval_status === 'approved' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(competitor.id)}
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                title="Remove"
               >
-                <Check className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleReject(competitor.id)}
-                className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                title="Reject"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </>
-          )}
-          {competitor.approval_status === 'approved' && (
-            <button
-              onClick={() => handleDelete(competitor.id)}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-              title="Remove"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+      <div className={emptyStateVariants({ className: 'p-8' })}>
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -279,16 +288,17 @@ export const CompetitorManager: React.FC<CompetitorManagerProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-white">Competitors</h3>
-          <p className="text-sm text-zinc-400">
+          <h3 className="text-lg font-medium">Competitors</h3>
+          <p className="text-sm text-muted-foreground">
             Monitor competitor LinkedIn pages to find engaged leads
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
             onClick={handleInferCompetitors}
             disabled={inferring}
-            className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg transition-colors disabled:opacity-50"
+            className="gap-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border-purple-500/30"
           >
             {inferring ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -296,19 +306,20 @@ export const CompetitorManager: React.FC<CompetitorManagerProps> = ({
               <Sparkles className="w-4 h-4" />
             )}
             Suggest with AI
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors"
+            className="gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-blue-500/30"
           >
             <Plus className="w-4 h-4" />
             Add Manually
-          </button>
+          </Button>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+        <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
           <AlertCircle className="w-4 h-4" />
           {error}
         </div>
@@ -316,133 +327,138 @@ export const CompetitorManager: React.FC<CompetitorManagerProps> = ({
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-lg space-y-4">
-          <h4 className="text-sm font-medium text-zinc-300">Add Competitor</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">Company Name *</label>
-              <input
-                type="text"
-                value={newCompetitor.name}
-                onChange={(e) => setNewCompetitor(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                placeholder="Acme Corp"
-              />
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <h4 className="text-sm font-medium">Add Competitor</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="comp-name">Company Name *</Label>
+                <Input
+                  id="comp-name"
+                  type="text"
+                  value={newCompetitor.name}
+                  onChange={(e) => setNewCompetitor(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Acme Corp"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="comp-linkedin">LinkedIn Company URL</Label>
+                <Input
+                  id="comp-linkedin"
+                  type="url"
+                  value={newCompetitor.linkedin_url || ''}
+                  onChange={(e) => setNewCompetitor(prev => ({ ...prev, linkedin_url: e.target.value }))}
+                  placeholder="https://linkedin.com/company/acme"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="comp-website">Website</Label>
+                <Input
+                  id="comp-website"
+                  type="url"
+                  value={newCompetitor.website || ''}
+                  onChange={(e) => setNewCompetitor(prev => ({ ...prev, website: e.target.value }))}
+                  placeholder="https://acme.com"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="comp-notes">Notes</Label>
+                <Input
+                  id="comp-notes"
+                  type="text"
+                  value={newCompetitor.notes || ''}
+                  onChange={(e) => setNewCompetitor(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Optional notes"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">LinkedIn Company URL</label>
-              <input
-                type="url"
-                value={newCompetitor.linkedin_url || ''}
-                onChange={(e) => setNewCompetitor(prev => ({ ...prev, linkedin_url: e.target.value }))}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                placeholder="https://linkedin.com/company/acme"
-              />
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                variant="ghost"
+                onClick={() => setShowAddForm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAddCompetitor}
+                disabled={!newCompetitor.name.trim()}
+              >
+                Add Competitor
+              </Button>
             </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">Website</label>
-              <input
-                type="url"
-                value={newCompetitor.website || ''}
-                onChange={(e) => setNewCompetitor(prev => ({ ...prev, website: e.target.value }))}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                placeholder="https://acme.com"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">Notes</label>
-              <input
-                type="text"
-                value={newCompetitor.notes || ''}
-                onChange={(e) => setNewCompetitor(prev => ({ ...prev, notes: e.target.value }))}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                placeholder="Optional notes"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2 justify-end">
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddCompetitor}
-              disabled={!newCompetitor.name.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              Add Competitor
-            </button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Pending Approvals Section */}
       {pendingCompetitors.length > 0 && (
-        <div className="border border-amber-500/30 rounded-lg overflow-hidden">
-          <button
-            onClick={() => toggleSection('pending')}
-            className="w-full flex items-center justify-between p-4 bg-amber-500/10 hover:bg-amber-500/15 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              {expandedSections.pending ? (
-                <ChevronDown className="w-4 h-4 text-amber-400" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-amber-400" />
-              )}
-              <span className="text-amber-400 font-medium">
-                Pending Approval ({pendingCompetitors.length})
-              </span>
-            </div>
-            {pendingCompetitors.length > 1 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleBulkApprove(); }}
-                className="px-3 py-1 text-xs bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors"
-              >
-                Approve All
+        <Collapsible open={expandedSections.pending} onOpenChange={() => toggleSection('pending')}>
+          <Card className="border-yellow-500/30">
+            <CollapsibleTrigger asChild>
+              <button className="w-full flex items-center justify-between p-4 bg-yellow-500/10 hover:bg-yellow-500/15 transition-colors rounded-t-lg">
+                <div className="flex items-center gap-2">
+                  {expandedSections.pending ? (
+                    <ChevronDown className="w-4 h-4 text-yellow-500" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-yellow-500" />
+                  )}
+                  <span className="text-yellow-500 font-medium">
+                    Pending Approval ({pendingCompetitors.length})
+                  </span>
+                </div>
+                {pendingCompetitors.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); handleBulkApprove(); }}
+                    className="bg-primary/20 text-primary hover:bg-primary/30"
+                  >
+                    Approve All
+                  </Button>
+                )}
               </button>
-            )}
-          </button>
-          
-          {expandedSections.pending && (
-            <div className="p-4 space-y-3">
-              {pendingCompetitors.map(c => renderCompetitorCard(c, true))}
-            </div>
-          )}
-        </div>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <CardContent className="p-4 pt-0 space-y-3">
+                {pendingCompetitors.map(c => renderCompetitorCard(c, true))}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
 
       {/* Approved Competitors Section */}
-      <div className="border border-zinc-700/50 rounded-lg overflow-hidden">
-        <button
-          onClick={() => toggleSection('approved')}
-          className="w-full flex items-center justify-between p-4 bg-zinc-800/50 hover:bg-zinc-800/80 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            {expandedSections.approved ? (
-              <ChevronDown className="w-4 h-4 text-zinc-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-zinc-400" />
-            )}
-            <span className="text-zinc-300 font-medium">
-              Active Competitors ({approvedCompetitors.length})
-            </span>
-          </div>
-        </button>
-        
-        {expandedSections.approved && (
-          <div className="p-4 space-y-3">
-            {approvedCompetitors.length === 0 ? (
-              <p className="text-sm text-zinc-500 text-center py-4">
-                No competitors added yet. Use AI suggestions or add manually.
-              </p>
-            ) : (
-              approvedCompetitors.map(c => renderCompetitorCard(c))
-            )}
-          </div>
-        )}
-      </div>
+      <Collapsible open={expandedSections.approved} onOpenChange={() => toggleSection('approved')}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted/80 transition-colors rounded-t-lg">
+              <div className="flex items-center gap-2">
+                {expandedSections.approved ? (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                )}
+                <span className="font-medium">
+                  Active Competitors ({approvedCompetitors.length})
+                </span>
+              </div>
+            </button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <CardContent className="p-4 pt-0 space-y-3">
+              {approvedCompetitors.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No competitors added yet. Use AI suggestions or add manually.
+                </p>
+              ) : (
+                approvedCompetitors.map(c => renderCompetitorCard(c))
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };

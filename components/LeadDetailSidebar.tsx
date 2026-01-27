@@ -5,7 +5,6 @@
 
 import { useState, useEffect } from 'react';
 import {
-  X,
   ExternalLink,
   Mail,
   MapPin,
@@ -18,22 +17,39 @@ import {
   ChevronDown,
   ChevronRight,
   Loader2,
-  MessageSquare,
   Linkedin,
   Copy,
   CheckCircle,
 } from 'lucide-react';
+import { cn } from '@/components/ui/utils';
 import { leadWatcherApi } from '../api/lead-watcher-api';
 import {
   Lead,
   LeadStatus,
-  IntentSignal,
   LeadScore,
   formatRelativeTime,
-  getStatusColors,
 } from '../types/lead-watcher-types';
 import { LeadScoreBadge } from './LeadScoreBadge';
 import { SignalBadge } from './SignalBadge';
+
+// shadcn components
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+
+// CVA variants
+import { infoRowVariants, avatarVariants, emptyStateVariants } from '../styles/variants';
 
 interface LeadDetailSidebarProps {
   leadId: string | null;
@@ -114,172 +130,144 @@ export function LeadDetailSidebar({
     return scores.length > 0 ? scores[0] : null;
   };
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-        onClick={onClose}
-      />
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="right\" className="w-full max-w-lg p-0">
+        <SheetHeader className="px-6 py-4 border-b">
+          <SheetTitle>Lead Details</SheetTitle>
+        </SheetHeader>
 
-      {/* Sidebar */}
-      <div
-        className={`fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l-[0.5px] border-border/15 z-50 transform transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="h-full flex flex-col">
-          {/* Header */}
-          <div className="flex-shrink-0 px-6 py-4 border-b border-white/10 bg-black/40">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Lead Details</h2>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
+        <ScrollArea className="flex-1 h-[calc(100vh-4rem)]">
+          {loading ? (
+            <div className={emptyStateVariants()}>\n              <Loader2 className="animate-spin text-primary" />
             </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-[#10b981]" />
-              </div>
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center h-64 gap-4 px-6">
-                <p className="text-red-400">{error}</p>
-              </div>
-            ) : lead ? (
-              <div className="p-6 space-y-6">
-                {/* Profile Header */}
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
-                    {lead.avatar_url ? (
-                      <img
-                        src={lead.avatar_url}
-                        alt={lead.display_name}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      lead.display_name.charAt(0).toUpperCase()
+          ) : error ? (
+            <div className={emptyStateVariants()}>
+              <p className="text-destructive">{error}</p>
+            </div>
+          ) : lead ? (
+            <div className="p-6 space-y-6">
+              {/* Profile Header */}
+              <div className="flex items-start gap-4">
+                <Avatar className={avatarVariants({ size: 'xl' })}>
+                  <AvatarImage src={lead.avatar_url || undefined} alt={lead.display_name} />
+                  <AvatarFallback>
+                    {lead.display_name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-semibold text-foreground truncate">
+                      {lead.display_name}
+                    </h3>
+                    {lead.profile_url && (
+                      <a
+                        href={lead.profile_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#0077b5] hover:text-[#0077b5]/80 transition-colors"
+                      >
+                        <Linkedin className="w-5 h-5" />
+                      </a>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-semibold text-white truncate">
-                        {lead.display_name}
-                      </h3>
-                      {lead.profile_url && (
-                        <a
-                          href={lead.profile_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#0077b5] hover:text-[#0077b5]/80 transition-colors"
-                        >
-                          <Linkedin className="w-5 h-5" />
-                        </a>
-                      )}
-                    </div>
-                    {lead.headline && (
-                      <p className="text-gray-400 mt-1">{lead.headline}</p>
-                    )}
-                    {lead.company_name && (
-                      <p className="text-gray-500 text-sm mt-0.5">
-                        @ {lead.company_name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  {lead.email ? (
-                    <>
-                      <span className="flex-1 text-white">{lead.email}</span>
-                      <button
-                        onClick={handleCopyEmail}
-                        className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
-                      >
-                        {copied ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="flex-1 text-gray-500">No email found</span>
-                      <button
-                        onClick={handleEnrichEmail}
-                        className="px-3 py-1 bg-[#10b981]/10 text-[#10b981] rounded-lg text-sm hover:bg-[#10b981]/20 transition-colors"
-                      >
-                        Find email
-                      </button>
-                    </>
+                  {lead.headline && (
+                    <p className="text-muted-foreground mt-1">{lead.headline}</p>
+                  )}
+                  {lead.company_name && (
+                    <p className="text-muted-foreground text-sm mt-0.5">
+                      @ {lead.company_name}
+                    </p>
                   )}
                 </div>
+              </div>
 
-                {/* Status Actions */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onStatusChange('shortlisted')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-colors ${
-                      lead.status === 'shortlisted'
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                        : 'bg-white/5 text-gray-400 hover:bg-green-500/10 hover:text-green-400'
-                    }`}
-                  >
-                    <Check className="w-4 h-4" />
-                    Shortlist
-                  </button>
-                  <button
-                    onClick={() => onStatusChange('reviewing')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-colors ${
-                      lead.status === 'reviewing'
-                        ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                        : 'bg-white/5 text-gray-400 hover:bg-yellow-500/10 hover:text-yellow-400'
-                    }`}
-                  >
-                    <HelpCircle className="w-4 h-4" />
-                    Review
-                  </button>
-                  <button
-                    onClick={() => onStatusChange('archived')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-colors ${
-                      lead.status === 'archived'
-                        ? 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                        : 'bg-white/5 text-gray-400 hover:bg-gray-500/10'
-                    }`}
-                  >
-                    <Archive className="w-4 h-4" />
-                    Archive
-                  </button>
-                </div>
+              {/* Email */}
+              <div className={infoRowVariants()}>
+                <Mail className="w-5 h-5 text-muted-foreground" />
+                {lead.email ? (
+                  <>
+                    <span className="flex-1 text-foreground">{lead.email}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleCopyEmail}
+                    >
+                      {copied ? (
+                        <CheckCircle className="w-4 h-4 text-primary" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 text-muted-foreground">No email found</span>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleEnrichEmail}
+                    >
+                      Find email
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Status Actions */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={lead.status === 'shortlisted' ? 'default' : 'outline'}
+                  className={cn(
+                    'flex-1',
+                    lead.status === 'shortlisted' && 'bg-primary/20 text-primary border-primary/30'
+                  )}
+                  onClick={() => onStatusChange('shortlisted')}
+                >
+                  <Check className="w-4 h-4" />
+                  Shortlist
+                </Button>
+                <Button
+                  variant={lead.status === 'reviewing' ? 'default' : 'outline'}
+                  className={cn(
+                    'flex-1',
+                    lead.status === 'reviewing' && 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                  )}
+                  onClick={() => onStatusChange('reviewing')}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Review
+                </Button>
+                <Button
+                  variant={lead.status === 'archived' ? 'default' : 'outline'}
+                  className={cn(
+                    'flex-1',
+                    lead.status === 'archived' && 'bg-muted text-muted-foreground'
+                  )}
+                  onClick={() => onStatusChange('archived')}
+                >
+                  <Archive className="w-4 h-4" />
+                  Archive
+                </Button>
+              </div>
 
                 {/* Score */}
                 {lead.scores.length > 0 && (
-                  <div className="p-4 bg-white/5 rounded-xl">
+                  <div className="p-4 bg-muted rounded-xl">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-gray-400">AI Score</span>
+                      <span className="text-sm font-medium text-muted-foreground">AI Score</span>
                       <LeadScoreBadge score={lead.scores[0].overall_score} showLabel size="lg" />
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-500">ICP Fit</span>
-                        <p className="text-white font-medium">
+                        <span className="text-muted-foreground">ICP Fit</span>
+                        <p className="text-foreground font-medium">
                           {Math.round(lead.scores[0].icp_fit_score)}%
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-500">Intent</span>
-                        <p className="text-white font-medium">
+                        <span className="text-muted-foreground">Intent</span>
+                        <p className="text-foreground font-medium">
                           {Math.round(lead.scores[0].intent_score)}%
                         </p>
                       </div>
@@ -288,145 +276,157 @@ export function LeadDetailSidebar({
                 )}
 
                 {/* Signals Section */}
-                <div className="border border-white/10 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => toggleSection('signals')}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <span className="font-medium text-white">
-                      Intent Signals ({lead.intent_signals.length})
-                    </span>
-                    {expandedSections.has('signals') ? (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    )}
-                  </button>
-                  {expandedSections.has('signals') && (
-                    <div className="p-4 space-y-3">
-                      {lead.intent_signals.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No signals detected yet</p>
+                <Collapsible
+                  open={expandedSections.has('signals')}
+                  onOpenChange={() => toggleSection('signals')}
+                  className="border border-border rounded-xl overflow-hidden"
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full flex items-center justify-between px-4 py-3 h-auto bg-muted/50 hover:bg-muted rounded-none"
+                    >
+                      <span className="font-medium">
+                        Intent Signals ({lead.intent_signals.length})
+                      </span>
+                      {expandedSections.has('signals') ? (
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
                       ) : (
-                        lead.intent_signals.map((signal) => (
-                          <div key={signal.id} className="p-3 bg-white/5 rounded-lg">
-                            <SignalBadge signal={signal} showDescription />
-                            <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                              <span>
-                                Strength: {Math.round(signal.strength_score * 100)}%
-                              </span>
-                              <span>•</span>
-                              <span>{formatRelativeTime(signal.occurred_at)}</span>
-                            </div>
-                          </div>
-                        ))
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
                       )}
-                    </div>
-                  )}
-                </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="p-4 space-y-3">
+                    {lead.intent_signals.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">No signals detected yet</p>
+                    ) : (
+                      lead.intent_signals.map((signal) => (
+                        <div key={signal.id} className="p-3 bg-muted rounded-lg">
+                          <SignalBadge signal={signal} showDescription />
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                            <span>
+                              Strength: {Math.round(signal.strength_score * 100)}%
+                            </span>
+                            <span>•</span>
+                            <span>{formatRelativeTime(signal.occurred_at)}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
 
                 {/* Basic Information Section */}
-                <div className="border border-white/10 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => toggleSection('basic-info')}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <span className="font-medium text-white">Basic Information</span>
-                    {expandedSections.has('basic-info') ? (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                <Collapsible
+                  open={expandedSections.has('basic-info')}
+                  onOpenChange={() => toggleSection('basic-info')}
+                  className="border border-border rounded-xl overflow-hidden"
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full flex items-center justify-between px-4 py-3 h-auto bg-muted/50 hover:bg-muted rounded-none"
+                    >
+                      <span className="font-medium">Basic Information</span>
+                      {expandedSections.has('basic-info') ? (
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="p-4 space-y-3">
+                    {lead.company && (
+                      <div className="flex items-start gap-3">
+                        <Building2 className="w-4 h-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Company</p>
+                          <p className="text-foreground">{lead.company.name}</p>
+                          {lead.company.industry && (
+                            <p className="text-sm text-muted-foreground">{lead.company.industry}</p>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </button>
-                  {expandedSections.has('basic-info') && (
-                    <div className="p-4 space-y-3">
-                      {lead.company && (
-                        <div className="flex items-start gap-3">
-                          <Building2 className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-500">Company</p>
-                            <p className="text-white">{lead.company.name}</p>
-                            {lead.company.industry && (
-                              <p className="text-sm text-gray-400">{lead.company.industry}</p>
-                            )}
-                          </div>
+                    {lead.location && (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Location</p>
+                          <p className="text-foreground">{lead.location}</p>
                         </div>
-                      )}
-                      {lead.location && (
-                        <div className="flex items-start gap-3">
-                          <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-500">Location</p>
-                            <p className="text-white">{lead.location}</p>
-                          </div>
+                      </div>
+                    )}
+                    {lead.company?.domain && (
+                      <div className="flex items-start gap-3">
+                        <Globe className="w-4 h-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Website</p>
+                          <a
+                            href={`https://${lead.company.domain}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {lead.company.domain}
+                          </a>
                         </div>
-                      )}
-                      {lead.company?.domain && (
-                        <div className="flex items-start gap-3">
-                          <Globe className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-500">Website</p>
-                            <a
-                              href={`https://${lead.company.domain}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#10b981] hover:underline"
-                            >
-                              {lead.company.domain}
-                            </a>
-                          </div>
+                      </div>
+                    )}
+                    {lead.headline && (
+                      <div className="flex items-start gap-3">
+                        <Briefcase className="w-4 h-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Title</p>
+                          <p className="text-foreground">{lead.headline}</p>
                         </div>
-                      )}
-                      {lead.headline && (
-                        <div className="flex items-start gap-3">
-                          <Briefcase className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-500">Title</p>
-                            <p className="text-white">{lead.headline}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
 
                 {/* Interactions Section */}
                 {lead.interactions.length > 0 && (
-                  <div className="border border-white/10 rounded-xl overflow-hidden">
-                    <button
-                      onClick={() => toggleSection('interactions')}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <span className="font-medium text-white">
-                        Recent Interactions ({lead.interactions.length})
-                      </span>
-                      {expandedSections.has('interactions') ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                      )}
-                    </button>
-                    {expandedSections.has('interactions') && (
-                      <div className="p-4 space-y-2">
-                        {lead.interactions.slice(0, 10).map((interaction) => (
-                          <div
-                            key={interaction.id}
-                            className="flex items-center justify-between py-2 text-sm"
-                          >
-                            <span className="text-white capitalize">
-                              {interaction.interaction_label}
-                            </span>
-                            <span className="text-gray-500">
-                              {formatRelativeTime(interaction.occurred_at)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <Collapsible
+                    open={expandedSections.has('interactions')}
+                    onOpenChange={() => toggleSection('interactions')}
+                    className="border border-border rounded-xl overflow-hidden"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full flex items-center justify-between px-4 py-3 h-auto bg-muted/50 hover:bg-muted rounded-none"
+                      >
+                        <span className="font-medium">
+                          Recent Interactions ({lead.interactions.length})
+                        </span>
+                        {expandedSections.has('interactions') ? (
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="p-4 space-y-2">
+                      {lead.interactions.slice(0, 10).map((interaction) => (
+                        <div
+                          key={interaction.id}
+                          className="flex items-center justify-between py-2 text-sm"
+                        >
+                          <span className="text-foreground capitalize">
+                            {interaction.interaction_label}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {formatRelativeTime(interaction.occurred_at)}
+                          </span>
+                        </div>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
                 )}
 
                 {/* Timestamps */}
-                <div className="pt-4 border-t border-white/10 text-sm text-gray-500">
+                <div className="pt-4 border-t text-sm text-muted-foreground">
                   <div className="flex justify-between">
                     <span>First seen</span>
                     <span>
@@ -446,10 +446,9 @@ export function LeadDetailSidebar({
                 </div>
               </div>
             ) : null}
-          </div>
-        </div>
-      </div>
-    </>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
   );
 }
 

@@ -30,6 +30,22 @@ import {
 } from '../types/lead-watcher-types';
 import { LeadScoreBadge } from './LeadScoreBadge';
 import { SignalBadge } from './SignalBadge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/components/ui/utils';
+import {
+  pageHeaderVariants,
+  headerIconVariants,
+  emptyStateVariants,
+} from '../styles/variants';
 
 interface LeadCopilotProps {
   onNavigate?: (page: string) => void;
@@ -143,13 +159,13 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
       <div className="flex-shrink-0 border-b-[0.5px] border-border/15 bg-card/80 backdrop-blur-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center">
+            <div className={pageHeaderVariants()}>
+              <div className={headerIconVariants()}>
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Lead Copilot</h1>
-                <p className="text-sm text-gray-400">
+                <h1 className="text-xl font-bold">Lead Copilot</h1>
+                <p className="text-sm text-muted-foreground">
                   AI-curated leads ready for outreach
                 </p>
               </div>
@@ -157,35 +173,32 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
 
             <div className="flex items-center gap-3">
               {/* Mode Toggle */}
-              <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl">
-                <button
+              <div className="flex items-center gap-1 p-1 bg-muted rounded-xl">
+                <Button
+                  variant={mode === 'review' ? 'default' : 'ghost'}
+                  size="sm"
                   onClick={() => setMode('review')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                    mode === 'review'
-                      ? 'bg-[#10b981] text-black font-medium'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className="gap-2"
                 >
                   <Eye className="w-4 h-4" />
                   Review
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant={mode === 'autopilot' ? 'default' : 'ghost'}
+                  size="sm"
                   onClick={() => setMode('autopilot')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                    mode === 'autopilot'
-                      ? 'bg-[#10b981] text-black font-medium'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className="gap-2"
                 >
                   <Zap className="w-4 h-4" />
                   Autopilot
-                </button>
+                </Button>
               </div>
 
-              <button
+              <Button
+                variant="outline"
                 onClick={handleBuildQueue}
                 disabled={building || !selectedIcpId}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="gap-2"
               >
                 {building ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -193,26 +206,26 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
                   <RefreshCw className="w-4 h-4" />
                 )}
                 Build Queue
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* ICP Selector */}
           <div className="flex items-center gap-4">
-            <select
-              value={selectedIcpId}
-              onChange={(e) => setSelectedIcpId(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#10b981]/50"
-            >
-              <option value="">Select ICP Profile</option>
-              {icpProfiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.name}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedIcpId} onValueChange={setSelectedIcpId}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Select ICP Profile" />
+              </SelectTrigger>
+              <SelectContent>
+                {icpProfiles.map((profile) => (
+                  <SelectItem key={profile.id} value={profile.id}>
+                    {profile.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-muted-foreground">
               {unactionedQueue.length} leads in today's queue
             </div>
           </div>
@@ -222,32 +235,33 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Queue List */}
-        <div className="w-80 border-r border-white/10 overflow-y-auto">
+        <div className="w-80 border-r border-border overflow-y-auto">
           <div className="p-4">
-            <h3 className="text-sm font-medium text-gray-400 mb-3">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
               Today's Priority
             </h3>
             
             {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <Loader2 className="w-6 h-6 animate-spin text-[#10b981]" />
+              <div className={emptyStateVariants()}>
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : error ? (
-              <div className="text-center py-8">
-                <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">{error}</p>
+              <div className={emptyStateVariants()}>
+                <AlertCircle className="w-8 h-8 text-destructive mb-2" />
+                <p className="text-sm text-muted-foreground">{error}</p>
               </div>
             ) : unactionedQueue.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Queue is empty</p>
-                <button
+              <div className={emptyStateVariants()}>
+                <Users className="w-8 h-8 text-muted-foreground/50 mb-2" />
+                <p className="text-sm text-muted-foreground">Queue is empty</p>
+                <Button
+                  variant="link"
                   onClick={handleBuildQueue}
                   disabled={building || !selectedIcpId}
-                  className="mt-3 text-sm text-[#10b981] hover:underline"
+                  className="mt-3 text-primary"
                 >
                   Build new queue
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="space-y-2">
@@ -255,21 +269,24 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
                   <button
                     key={entry.id}
                     onClick={() => setSelectedEntry(entry)}
-                    className={`w-full p-3 rounded-xl text-left transition-colors ${
+                    className={cn(
+                      'w-full p-3 rounded-xl text-left transition-colors border',
                       selectedEntry?.id === entry.id
-                        ? 'bg-[#10b981]/10 border border-[#10b981]/30'
-                        : 'bg-white/5 hover:bg-white/10 border border-transparent'
-                    }`}
+                        ? 'bg-primary/10 border-primary/30'
+                        : 'bg-muted hover:bg-muted/80 border-transparent'
+                    )}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center text-white text-sm font-medium">
-                        {index + 1}
-                      </div>
+                      <Avatar className="h-8 w-8 bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground">
+                        <AvatarFallback className="bg-transparent text-sm font-medium">
+                          {index + 1}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white truncate">
+                        <p className="font-medium truncate">
                           {entry.lead.display_name}
                         </p>
-                        <p className="text-xs text-gray-400 truncate">
+                        <p className="text-xs text-muted-foreground truncate">
                           {entry.lead.headline || entry.lead.company_name}
                         </p>
                       </div>
@@ -288,12 +305,14 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
             <div className="p-6">
               {/* Lead Header */}
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center text-white text-2xl font-medium">
-                  {selectedEntry.lead.display_name.charAt(0).toUpperCase()}
-                </div>
+                <Avatar className="h-16 w-16 bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground">
+                  <AvatarFallback className="bg-transparent text-2xl font-medium">
+                    {selectedEntry.lead.display_name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold">
                       {selectedEntry.lead.display_name}
                     </h2>
                     {selectedEntry.lead.profile_url && (
@@ -301,17 +320,17 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
                         href={selectedEntry.lead.profile_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#0077b5] hover:text-[#0077b5]/80"
+                        className="text-blue-500 hover:text-blue-500/80"
                       >
                         <ExternalLink className="w-5 h-5" />
                       </a>
                     )}
                   </div>
-                  <p className="text-gray-400 mt-1">
+                  <p className="text-muted-foreground mt-1">
                     {selectedEntry.lead.headline}
                   </p>
                   {selectedEntry.lead.company_name && (
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-muted-foreground/60 text-sm">
                       @ {selectedEntry.lead.company_name}
                     </p>
                   )}
@@ -320,96 +339,105 @@ export function LeadCopilot({ onNavigate }: LeadCopilotProps) {
               </div>
 
               {/* Why This Lead */}
-              <div className="p-5 bg-white/5 rounded-xl border border-white/10 mb-6">
-                <h3 className="text-sm font-medium text-gray-400 mb-3">
-                  Why This Lead?
-                </h3>
-                <p className="text-white mb-4">{selectedEntry.why.primary_reason}</p>
-                
-                {selectedEntry.why.top_signals.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">
-                      Top Signals
-                    </p>
-                    {selectedEntry.why.top_signals.map((signal, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between p-2 bg-black/30 rounded-lg"
-                      >
-                        <span className="text-sm text-gray-300">{signal.label}</span>
-                        <span className="text-xs text-gray-500">
-                          {formatRelativeTime(signal.occurred_at)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <Card className="mb-6">
+                <CardContent className="p-5">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                    Why This Lead?
+                  </h3>
+                  <p className="mb-4">{selectedEntry.why.primary_reason}</p>
+                  
+                  {selectedEntry.why.top_signals.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Top Signals
+                      </p>
+                      {selectedEntry.why.top_signals.map((signal, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between p-2 bg-background rounded-lg"
+                        >
+                          <span className="text-sm">{signal.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatRelativeTime(signal.occurred_at)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* ICP Match */}
               {Object.keys(selectedEntry.why.icp_match).length > 0 && (
-                <div className="p-5 bg-white/5 rounded-xl border border-white/10 mb-6">
-                  <h3 className="text-sm font-medium text-gray-400 mb-3">
-                    ICP Match
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(selectedEntry.why.icp_match).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className={`flex items-center gap-2 p-2 rounded-lg ${
-                          value === 'match'
-                            ? 'bg-green-500/10 text-green-400'
-                            : 'bg-red-500/10 text-red-400'
-                        }`}
-                      >
-                        {value === 'match' ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          <Archive className="w-4 h-4" />
-                        )}
-                        <span className="text-sm capitalize">
-                          {key.replace(/_/g, ' ')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <Card className="mb-6">
+                  <CardContent className="p-5">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                      ICP Match
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(selectedEntry.why.icp_match).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className={cn(
+                            'flex items-center gap-2 p-2 rounded-lg',
+                            value === 'match'
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-destructive/10 text-destructive'
+                          )}
+                        >
+                          {value === 'match' ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Archive className="w-4 h-4" />
+                          )}
+                          <span className="text-sm capitalize">
+                            {key.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Actions */}
               <div className="flex items-center gap-3">
-                <button
+                <Button
                   onClick={() => {
                     handleStatusChange(selectedEntry.lead.id, 'shortlisted');
                     handleAction(selectedEntry.id, 'approve');
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#10b981] hover:bg-[#10b981]/90 text-black font-medium rounded-xl transition-colors"
+                  className="flex-1 gap-2"
+                  size="lg"
                 >
                   <Check className="w-5 h-5" />
                   Approve & Start Outreach
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => handleAction(selectedEntry.id, 'skip')}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors"
+                  size="lg"
+                  className="gap-2"
                 >
                   <HelpCircle className="w-5 h-5" />
                   Skip
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     handleStatusChange(selectedEntry.lead.id, 'archived');
                     handleAction(selectedEntry.id, 'archive');
                   }}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl transition-colors"
+                  size="lg"
                 >
                   <Archive className="w-5 h-5" />
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Sparkles className="w-12 h-12 text-gray-600 mb-4" />
-              <p className="text-gray-400">Select a lead to review</p>
+            <div className={emptyStateVariants({ className: 'h-full' })}>
+              <Sparkles className="w-12 h-12 text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">Select a lead to review</p>
             </div>
           )}
         </div>

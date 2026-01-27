@@ -11,8 +11,6 @@ import {
   ChevronUp,
   Users,
   Download,
-  Mail,
-  MoreHorizontal,
   ExternalLink,
   Loader2,
   AlertCircle,
@@ -20,9 +18,8 @@ import {
   HelpCircle,
   X,
   RefreshCw,
-  Zap,
-  MessageSquare,
 } from 'lucide-react';
+import { cn } from '@/components/ui/utils';
 import { leadWatcherApi } from '../api/lead-watcher-api';
 import {
   Lead,
@@ -30,14 +27,10 @@ import {
   IcpProfile,
   LeadsListParams,
   PaginationMeta,
-  IntentSignal,
-  getScoreColors,
-  getSignalColors,
-  getStatusColors,
   formatRelativeTime,
-  formatSignalType,
-  getScoreLabel,
 } from '../types/lead-watcher-types';
+
+// shadcn components
 import {
   Table,
   TableHeader,
@@ -46,31 +39,36 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-// Inline LeadScoreBadge component
-function LeadScoreBadge({ score, showLabel = false }: { score: number; showLabel?: boolean }) {
-  const colors = getScoreColors(score);
-  return (
-    <div className={`inline-flex items-center gap-1.5 rounded-lg ${colors.bg} text-sm px-2 py-1`}>
-      <span className="font-medium">{colors.icon || Math.round(score)}</span>
-      {!colors.icon && <span className={colors.text}>{Math.round(score)}</span>}
-      {showLabel && <span className={`${colors.text} capitalize`}>{getScoreLabel(score)}</span>}
-    </div>
-  );
-}
+// Package components
+import { LeadScoreBadge } from './LeadScoreBadge';
+import { SignalBadge } from './SignalBadge';
 
-// Inline SignalBadge component  
-function SignalBadge({ signal }: { signal: IntentSignal }) {
-  const colors = getSignalColors(signal.signal_type);
-  return (
-    <div className={`inline-flex items-center gap-1.5 rounded-lg ${colors.bg} text-sm px-2 py-1`}>
-      <Zap className={`w-3.5 h-3.5 ${colors.text}`} />
-      <span className={`font-medium ${colors.text}`}>
-        {signal.signal_label || formatSignalType(signal.signal_type)}
-      </span>
-    </div>
-  );
-}
+// CVA variants
+import {
+  pageHeaderVariants,
+  headerIconVariants,
+  iconButtonVariants,
+  emptyStateVariants,
+} from '../styles/variants';
 
 // Lazy load the heavy sidebar component
 import type { FC } from 'react';
@@ -285,16 +283,16 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
   return (
     <div className="flex-1 flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex-shrink-0 border-b-[0.5px] border-border/15 bg-card/80 backdrop-blur-sm">
+      <div className={pageHeaderVariants()}>
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
+              <div className={headerIconVariants({ color: 'primary' })}>
+                <Users className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Leads</h1>
-                <p className="text-sm text-gray-400">
+                <h1 className="text-xl font-bold text-foreground">Leads</h1>
+                <p className="text-sm text-muted-foreground">
                   {meta?.total ?? 0} leads found
                 </p>
               </div>
@@ -303,38 +301,35 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
             <div className="flex items-center gap-3">
               {selectedLeads.size > 0 && (
                 <div className="flex items-center gap-2 mr-4">
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-muted-foreground">
                     {selectedLeads.size} selected
                   </span>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleBulkStatusUpdate('shortlisted')}
-                    className="px-3 py-1.5 text-sm bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 transition-colors"
+                    className="bg-primary/10 text-primary hover:bg-primary/20"
                   >
                     Shortlist
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleBulkStatusUpdate('archived')}
-                    className="px-3 py-1.5 text-sm bg-gray-500/10 text-gray-400 rounded-lg hover:bg-gray-500/20 transition-colors"
                   >
                     Archive
-                  </button>
+                  </Button>
                 </div>
               )}
 
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-              >
+              <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export</span>
-              </button>
+              </Button>
 
-              <button
-                onClick={() => loadLeads()}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
+              <Button variant="outline" size="icon" onClick={() => loadLeads()}>
+                <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+              </Button>
             </div>
           </div>
 
@@ -342,103 +337,108 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
           <div className="flex items-center gap-4">
             <form onSubmit={handleSearch} className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, email, or company..."
-                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#10b981]/50 focus:ring-1 focus:ring-[#10b981]/50"
+                  className="pl-10"
                 />
               </div>
             </form>
 
-            <button
+            <Button
+              variant={showFilters ? 'default' : 'outline'}
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                showFilters
-                  ? 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/30'
-                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-              }`}
+              className={cn(showFilters && 'bg-primary/10 text-primary border-primary/30')}
             >
               <Filter className="w-4 h-4" />
               <span>Filters</span>
               {Object.values(filters).filter(v => v !== undefined && v !== '' && v !== 25 && v !== 1).length > 2 && (
-                <span className="w-5 h-5 flex items-center justify-center bg-[#10b981] text-black text-xs font-bold rounded-full">
+                <Badge variant="default" className="ml-1">
                   {Object.values(filters).filter(v => v !== undefined && v !== '' && v !== 25 && v !== 1).length - 2}
-                </span>
+                </Badge>
               )}
-            </button>
+            </Button>
           </div>
 
           {/* Filter Panel */}
           {showFilters && (
-            <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                  ICP Profile
-                </label>
-                <select
-                  value={filters.icp_profile_id || ''}
-                  onChange={(e) => handleFilterChange('icp_profile_id', e.target.value)}
-                  className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#10b981]/50"
+            <div className="mt-4 p-4 bg-muted/50 rounded-xl border grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">ICP Profile</Label>
+                <Select
+                  value={filters.icp_profile_id || 'all'}
+                  onValueChange={(value: string) => handleFilterChange('icp_profile_id', value === 'all' ? '' : value)}
                 >
-                  <option value="">All Profiles</option>
-                  {icpProfiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger size="sm">
+                    <SelectValue placeholder="All Profiles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Profiles</SelectItem>
+                    {icpProfiles.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                  Status
-                </label>
-                <select
-                  value={filters.status || ''}
-                  onChange={(e) => handleFilterChange('status', e.target.value as LeadStatus)}
-                  className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#10b981]/50"
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status</Label>
+                <Select
+                  value={filters.status || 'all'}
+                  onValueChange={(value: string) => handleFilterChange('status', value === 'all' ? '' : value as LeadStatus)}
                 >
-                  <option value="">All Statuses</option>
-                  <option value="new">New</option>
-                  <option value="reviewing">Reviewing</option>
-                  <option value="shortlisted">Shortlisted</option>
-                  <option value="archived">Archived</option>
-                </select>
+                  <SelectTrigger size="sm">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="reviewing">Reviewing</SelectItem>
+                    <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                  Min Score
-                </label>
-                <select
-                  value={filters.min_score || ''}
-                  onChange={(e) => handleFilterChange('min_score', e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#10b981]/50"
+              <div className="space-y-1.5">
+                <Label className="text-xs">Min Score</Label>
+                <Select
+                  value={filters.min_score?.toString() || 'any'}
+                  onValueChange={(value: string) => handleFilterChange('min_score', value === 'any' ? undefined : Number(value))}
                 >
-                  <option value="">Any Score</option>
-                  <option value="80">80+ (Excellent)</option>
-                  <option value="60">60+ (Good)</option>
-                  <option value="40">40+ (Fair)</option>
-                  <option value="20">20+ (Low)</option>
-                </select>
+                  <SelectTrigger size="sm">
+                    <SelectValue placeholder="Any Score" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any Score</SelectItem>
+                    <SelectItem value="80">80+ (Excellent)</SelectItem>
+                    <SelectItem value="60">60+ (Good)</SelectItem>
+                    <SelectItem value="40">40+ (Fair)</SelectItem>
+                    <SelectItem value="20">20+ (Low)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                  Discovery Scope
-                </label>
-                <select
-                  value={filters.discovery_scope || ''}
-                  onChange={(e) => handleFilterChange('discovery_scope', e.target.value)}
-                  className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#10b981]/50"
+              <div className="space-y-1.5">
+                <Label className="text-xs">Discovery Scope</Label>
+                <Select
+                  value={filters.discovery_scope || 'all'}
+                  onValueChange={(value: string) => handleFilterChange('discovery_scope', value === 'all' ? '' : value)}
                 >
-                  <option value="">All Matches</option>
-                  <option value="strict">Strict ICP Match</option>
-                  <option value="broad">Broad Match Only</option>
-                </select>
+                  <SelectTrigger size="sm">
+                    <SelectValue placeholder="All Matches" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Matches</SelectItem>
+                    <SelectItem value="strict">Strict ICP Match</SelectItem>
+                    <SelectItem value="broad">Broad Match Only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
@@ -448,25 +448,22 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {loading && leads.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-[#10b981]" />
+          <div className={emptyStateVariants()}>
+            <Loader2 className="animate-spin text-primary" />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <AlertCircle className="w-12 h-12 text-red-400" />
-            <p className="text-gray-400">{error}</p>
-            <button
-              onClick={() => loadLeads()}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
-            >
+          <div className={emptyStateVariants()}>
+            <AlertCircle className="text-destructive" />
+            <p className="text-muted-foreground">{error}</p>
+            <Button variant="outline" onClick={() => loadLeads()}>
               Retry
-            </button>
+            </Button>
           </div>
         ) : leads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <Users className="w-12 h-12 text-gray-600" />
-            <p className="text-gray-400">No leads found</p>
-            <p className="text-sm text-gray-500">
+          <div className={emptyStateVariants()}>
+            <Users className="text-muted-foreground" />
+            <p className="text-muted-foreground">No leads found</p>
+            <p className="text-sm text-muted-foreground">
               Try adjusting your filters or run a new search
             </p>
           </div>
@@ -475,15 +472,13 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={selectedLeads.size === leads.length && leads.length > 0}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-[var(--steel-gray)] bg-transparent text-[var(--neon-lime)] focus:ring-[var(--neon-lime)]/50"
+                    onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
                 <TableHead
-                  className="cursor-pointer hover:text-white transition-colors"
+                  className="cursor-pointer hover:text-foreground transition-colors"
                   onClick={() => handleSort('display_name')}
                 >
                   <div className="flex items-center gap-1">
@@ -493,7 +488,7 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
                 </TableHead>
                 <TableHead>Signal</TableHead>
                 <TableHead
-                  className="cursor-pointer hover:text-white transition-colors"
+                  className="cursor-pointer hover:text-foreground transition-colors"
                   onClick={() => handleSort('overall_score')}
                 >
                   <div className="flex items-center gap-1">
@@ -503,7 +498,7 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
                 </TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead
-                  className="cursor-pointer hover:text-white transition-colors"
+                  className="cursor-pointer hover:text-foreground transition-colors"
                   onClick={() => handleSort('last_seen_at')}
                 >
                   <div className="flex items-center gap-1">
@@ -524,41 +519,47 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
                   <TableRow
                     key={lead.id}
                     onClick={() => handleRowClick(lead)}
-                    className={`cursor-pointer ${
-                      selectedLeads.has(lead.id) ? 'bg-[var(--neon-lime)]/5' : ''
-                    }`}
+                    className={cn(
+                      'cursor-pointer',
+                      selectedLeads.has(lead.id) && 'bg-primary/5'
+                    )}
                   >
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
+                    <TableCell onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                      <Checkbox
                         checked={selectedLeads.has(lead.id)}
-                        onChange={() => handleSelectLead(lead.id)}
-                        className="w-4 h-4 rounded border-[var(--steel-gray)] bg-transparent text-[var(--neon-lime)] focus:ring-[var(--neon-lime)]/50"
+                        onCheckedChange={() => handleSelectLead(lead.id)}
                       />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--neon-lime)] to-[var(--cyber-blue)] flex items-center justify-center text-[var(--void-black)] font-medium">
-                          {lead.display_name.charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar>
+                          <AvatarFallback className="bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground">
+                            {lead.display_name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-white truncate">
+                            <span className="font-medium text-foreground truncate">
                               {lead.display_name}
                             </span>
                             {lead.profile_url && (
-                              <a
-                                href={lead.profile_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-[var(--steel-gray)] hover:text-[#0077b5] transition-colors"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <a
+                                    href={lead.profile_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-muted-foreground hover:text-[#0077b5] transition-colors"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                </TooltipTrigger>
+                                <TooltipContent>View LinkedIn Profile</TooltipContent>
+                              </Tooltip>
                             )}
                           </div>
-                          <div className="text-sm text-[var(--steel-gray)] truncate">
+                          <div className="text-sm text-muted-foreground truncate">
                             {lead.headline || lead.company_name || 'No details'}
                           </div>
                         </div>
@@ -568,86 +569,105 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
                       {primarySignal ? (
                         <SignalBadge signal={primarySignal} />
                       ) : (
-                        <span className="text-[var(--steel-gray)] text-sm">-</span>
+                        <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
                     <TableCell>
                       {primaryScore ? (
                         <LeadScoreBadge score={primaryScore.overall_score} />
                       ) : (
-                        <span className="text-[var(--steel-gray)] text-sm">-</span>
+                        <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
                     <TableCell>
                       {lead.email ? (
-                        <span className="text-gray-300 text-sm">{lead.email}</span>
+                        <span className="text-muted-foreground text-sm">{lead.email}</span>
                       ) : (
-                        <button
-                          onClick={(e) => {
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto text-primary"
+                          onClick={(e: React.MouseEvent) => {
                             e.stopPropagation();
                             // Handle enrich email
                           }}
-                          className="text-[var(--neon-lime)] text-sm hover:underline"
                         >
                           Enrich
-                        </button>
+                        </Button>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-[var(--steel-gray)]">
+                    <TableCell className="text-sm text-muted-foreground">
                       {lead.last_seen_at ? formatRelativeTime(lead.last_seen_at) : '-'}
                     </TableCell>
                     <TableCell>
                       {lead.discovery_metadata?.strict_icp_match !== undefined && (
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            lead.discovery_metadata.strict_icp_match
-                              ? 'bg-[var(--neon-lime)]/10 text-[var(--neon-lime)]'
-                              : 'bg-yellow-500/10 text-yellow-400'
-                          }`}
-                        >
-                          {lead.discovery_metadata.strict_icp_match ? (
-                            <Check className="w-3.5 h-3.5" />
-                          ) : (
-                            <HelpCircle className="w-3.5 h-3.5" />
-                          )}
-                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={cn(
+                                'w-6 h-6 rounded-full flex items-center justify-center',
+                                lead.discovery_metadata.strict_icp_match
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'bg-yellow-500/10 text-yellow-400'
+                              )}
+                            >
+                              {lead.discovery_metadata.strict_icp_match ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : (
+                                <HelpCircle className="w-3.5 h-3.5" />
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {lead.discovery_metadata.strict_icp_match ? 'Strict ICP Match' : 'Broad Match'}
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleStatusChange(lead.id, 'shortlisted')}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            lead.status === 'shortlisted'
-                              ? 'bg-[var(--neon-lime)]/20 text-[var(--neon-lime)]'
-                              : 'hover:bg-[var(--charcoal)] text-[var(--steel-gray)] hover:text-[var(--neon-lime)]'
-                          }`}
-                          title="Shortlist"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(lead.id, 'reviewing')}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            lead.status === 'reviewing'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : 'hover:bg-[var(--charcoal)] text-[var(--steel-gray)] hover:text-yellow-400'
-                          }`}
-                          title="Mark for Review"
-                        >
-                          <HelpCircle className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(lead.id, 'archived')}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            lead.status === 'archived'
-                              ? 'bg-[var(--steel-gray)]/20 text-[var(--steel-gray)]'
-                              : 'hover:bg-[var(--charcoal)] text-[var(--steel-gray)] hover:text-gray-300'
-                          }`}
-                          title="Archive"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                    <TableCell className="text-right" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => handleStatusChange(lead.id, 'shortlisted')}
+                              className={iconButtonVariants({
+                                intent: 'success',
+                                active: lead.status === 'shortlisted',
+                              })}
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Shortlist</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => handleStatusChange(lead.id, 'reviewing')}
+                              className={iconButtonVariants({
+                                intent: 'warning',
+                                active: lead.status === 'reviewing',
+                              })}
+                            >
+                              <HelpCircle className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Mark for Review</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => handleStatusChange(lead.id, 'archived')}
+                              className={iconButtonVariants({
+                                intent: 'default',
+                                active: lead.status === 'archived',
+                              })}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Archive</TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -660,32 +680,33 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
 
       {/* Pagination */}
       {meta && meta.last_page > 1 && (
-        <div className="flex-shrink-0 px-6 py-4 border-t border-white/10 bg-black/40 flex items-center justify-between">
-          <div className="text-sm text-gray-400">
+        <div className="flex-shrink-0 px-6 py-4 border-t bg-card/50 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
             Showing {meta.from || 0} to {meta.to || 0} of {meta.total} leads
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => handlePageChange(meta.current_page - 1)}
               disabled={meta.current_page <= 1}
-              className="px-3 py-1.5 text-sm bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
             >
               Previous
-            </button>
-            <span className="text-sm text-gray-400">
+            </Button>
+            <span className="text-sm text-muted-foreground">
               Page {meta.current_page} of {meta.last_page}
             </span>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => handlePageChange(meta.current_page + 1)}
               disabled={meta.current_page >= meta.last_page}
-              className="px-3 py-1.5 text-sm bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}
-
       {/* Detail Sidebar */}
       <LeadDetailSidebarPlaceholder
         leadId={selectedLeadId}

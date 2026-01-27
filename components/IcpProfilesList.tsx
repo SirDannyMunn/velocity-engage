@@ -11,17 +11,35 @@ import {
   Edit2,
   Copy,
   Trash2,
-  Play,
   Pause,
   Users,
   BarChart3,
   Loader2,
   AlertCircle,
   RefreshCw,
-  Check,
 } from 'lucide-react';
+import { cn } from '@/components/ui/utils';
 import { leadWatcherApi } from '../api/lead-watcher-api';
 import { IcpProfile } from '../types/lead-watcher-types';
+
+// shadcn components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+// CVA variants
+import {
+  pageHeaderVariants,
+  headerIconVariants,
+  statusBadgeVariants,
+  emptyStateVariants,
+} from '../styles/variants';
 
 interface IcpProfilesListProps {
   onNavigate?: (page: string, params?: Record<string, string>) => void;
@@ -31,7 +49,6 @@ export function IcpProfilesList({ onNavigate }: IcpProfilesListProps) {
   const [profiles, setProfiles] = useState<IcpProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -138,184 +155,156 @@ export function IcpProfilesList({ onNavigate }: IcpProfilesListProps) {
   return (
     <div className="flex-1 flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex-shrink-0 border-b-[0.5px] border-border/15 bg-card/80 backdrop-blur-sm">
+      <div className={pageHeaderVariants()}>
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center">
-                <Target className="w-5 h-5 text-white" />
+              <div className={headerIconVariants({ color: 'primary' })}>
+                <Target className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">ICP Profiles</h1>
-                <p className="text-sm text-gray-400">
+                <h1 className="text-xl font-bold text-foreground">ICP Profiles</h1>
+                <p className="text-sm text-muted-foreground">
                   Define your Ideal Customer Profiles for lead discovery
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => loadProfiles()}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
+              <Button variant="outline" size="icon" onClick={() => loadProfiles()}>
+                <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+              </Button>
 
-              <button
-                onClick={handleCreate}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#10b981] to-emerald-500 hover:from-[#0d9668] hover:to-emerald-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
-              >
+              <Button onClick={handleCreate}>
                 <Plus className="w-5 h-5" />
                 Create ICP Profile
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       </div>
-
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {loading && profiles.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-[#10b981]" />
+          <div className={emptyStateVariants()}>
+            <Loader2 className="animate-spin text-primary" />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <AlertCircle className="w-12 h-12 text-red-400" />
-            <p className="text-gray-400">{error}</p>
-            <button
-              onClick={() => loadProfiles()}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
-            >
+          <div className={emptyStateVariants()}>
+            <AlertCircle className="text-destructive" />
+            <p className="text-muted-foreground">{error}</p>
+            <Button variant="outline" onClick={() => loadProfiles()}>
               Retry
-            </button>
+            </Button>
           </div>
         ) : profiles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <Target className="w-12 h-12 text-gray-600" />
-            <p className="text-gray-400">No ICP profiles yet</p>
-            <p className="text-sm text-gray-500">
+          <div className={emptyStateVariants()}>
+            <Target className="text-muted-foreground" />
+            <p className="text-muted-foreground">No ICP profiles yet</p>
+            <p className="text-sm text-muted-foreground">
               Create your first Ideal Customer Profile to start finding leads
             </p>
-            <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#10b981] to-emerald-500 hover:from-[#0d9668] hover:to-emerald-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
-            >
+            <Button onClick={handleCreate}>
               <Plus className="w-5 h-5" />
               Create ICP Profile
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {profiles.map((profile) => (
-              <div
+              <Card
                 key={profile.id}
-                className={`relative group bg-white/5 border rounded-2xl p-5 transition-all hover:bg-white/10 ${
-                  profile.is_active
-                    ? 'border-[#10b981]/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-                    : 'border-white/10'
-                }`}
+                className={cn(
+                  'relative group transition-all hover:bg-muted/50',
+                  profile.is_active && 'border-primary/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+                )}
               >
-                {/* Status Badge */}
-                <div className="absolute top-4 right-4">
-                  <button
-                    onClick={() => handleToggleActive(profile)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                      profile.is_active
-                        ? 'bg-[#10b981]/20 text-[#10b981]'
-                        : 'bg-gray-500/20 text-gray-400'
-                    }`}
-                  >
-                    {profile.is_active ? (
-                      <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
-                        Active
-                      </>
-                    ) : (
-                      <>
-                        <Pause className="w-3 h-3" />
-                        Inactive
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Header */}
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-white pr-20">
-                    {profile.name}
-                  </h3>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {getDefinitionSummary(profile)}
-                  </p>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {getDefinitionTags(profile).map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-white/5 text-gray-300 rounded-lg text-xs"
+                <CardHeader className="pb-2">
+                  {/* Status Badge */}
+                  <div className="absolute top-4 right-4">
+                    <button
+                      onClick={() => handleToggleActive(profile)}
+                      className={statusBadgeVariants({
+                        status: profile.is_active ? 'active' : 'paused',
+                      })}
                     >
-                      {tag}
-                    </span>
-                  ))}
-                  {getDefinitionTags(profile).length === 0 && (
-                    <span className="text-gray-500 text-sm italic">
-                      No targeting criteria
-                    </span>
-                  )}
-                </div>
+                      {profile.is_active ? (
+                        <>
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                          Active
+                        </>
+                      ) : (
+                        <>
+                          <Pause className="w-3 h-3" />
+                          Inactive
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <CardTitle className="text-lg pr-20">{profile.name}</CardTitle>
+                  <CardDescription>{getDefinitionSummary(profile)}</CardDescription>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {getDefinitionTags(profile).map((tag, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {getDefinitionTags(profile).length === 0 && (
+                      <span className="text-muted-foreground text-sm italic">
+                        No targeting criteria
+                      </span>
+                    )}
+                  </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-gray-400" />
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-foreground">
                         {profile.stats?.leads_matched ?? 0}
                       </p>
-                      <p className="text-xs text-gray-500">Leads Matched</p>
+                      <p className="text-xs text-muted-foreground">Leads Matched</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-gray-400" />
+                    <BarChart3 className="w-4 h-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-foreground">
                         {profile.stats?.avg_score ?? 0}
                       </p>
-                      <p className="text-xs text-gray-500">Avg Score</p>
+                      <p className="text-xs text-muted-foreground">Avg Score</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/10">
-                  <button
-                    onClick={() => handleEdit(profile.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm transition-colors"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Edit
-                  </button>
-                  
-                  <div className="relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenMenuId(openMenuId === profile.id ? null : profile.id);
-                      }}
-                      className="p-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors"
+                  <div className="flex items-center gap-2 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleEdit(profile.id)}
                     >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-
-                    {openMenuId === profile.id && (
-                      <div className="absolute right-0 top-full mt-1 w-40 bg-card border border-border rounded-xl shadow-2xl z-20 overflow-hidden">
-                        <button
+                      <Edit2 className="w-4 h-4" />
+                      Edit
+                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
                           onClick={() => handleDuplicate(profile.id)}
                           disabled={duplicating === profile.id}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 transition-colors"
                         >
                           {duplicating === profile.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -323,11 +312,11 @@ export function IcpProfilesList({ onNavigate }: IcpProfilesListProps) {
                             <Copy className="w-4 h-4" />
                           )}
                           Duplicate
-                        </button>
-                        <button
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
                           onClick={() => handleDelete(profile.id)}
                           disabled={deleting === profile.id}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                         >
                           {deleting === profile.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -335,24 +324,16 @@ export function IcpProfilesList({ onNavigate }: IcpProfilesListProps) {
                             <Trash2 className="w-4 h-4" />
                           )}
                           Delete
-                        </button>
-                      </div>
-                    )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </div>
-
-      {/* Click outside to close menu */}
-      {openMenuId && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => setOpenMenuId(null)}
-        />
-      )}
     </div>
   );
 }

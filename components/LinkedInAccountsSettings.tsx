@@ -25,12 +25,38 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { cn } from '@/components/ui/utils';
 import { leadWatcherApi } from '../api/lead-watcher-api';
 import {
   LinkedInAccount,
   LinkedInAccountStatus,
   formatRelativeTime,
 } from '../types/lead-watcher-types';
+
+// shadcn components
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Progress } from '@/components/ui/progress';
+
+// CVA variants
+import { pageHeaderVariants, headerIconVariants, emptyStateVariants, statusBadgeVariants } from '../styles/variants';
 
 interface LinkedInAccountsSettingsProps {
   onNavigate?: (page: string) => void;
@@ -183,8 +209,8 @@ export function LinkedInAccountsSettings({ onNavigate }: LinkedInAccountsSetting
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-[#10b981]" />
+      <div className={emptyStateVariants()}>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -192,35 +218,33 @@ export function LinkedInAccountsSettings({ onNavigate }: LinkedInAccountsSetting
   return (
     <div className="flex-1 flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex-shrink-0 border-b-[0.5px] border-border/15 bg-card/80 backdrop-blur-sm">
+      <div className={pageHeaderVariants()}>
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0077B5] to-blue-600 flex items-center justify-center">
+              <div className={headerIconVariants({ gradient: 'blue' })}>
                 <Linkedin className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">LinkedIn Accounts</h1>
-                <p className="text-sm text-gray-400">
+                <h1 className="text-xl font-bold">LinkedIn Accounts</h1>
+                <p className="text-sm text-muted-foreground">
                   {accounts.length} accounts • {accounts.filter((a) => a.status === 'connected').length} connected
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => loadAccounts()}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#0077B5] to-blue-600 hover:from-[#0077B5]/90 hover:to-blue-600/90 text-white font-medium rounded-lg transition-colors"
-              >
+              </Button>
+              <Button onClick={() => setShowAddModal(true)} className="gap-2">
                 <PlusCircle className="w-4 h-4" />
                 Add Account
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -229,30 +253,24 @@ export function LinkedInAccountsSettings({ onNavigate }: LinkedInAccountsSetting
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {error ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <AlertCircle className="w-12 h-12 text-red-400" />
-            <p className="text-gray-400">{error}</p>
-            <button
-              onClick={() => loadAccounts()}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
-            >
+          <div className={emptyStateVariants()}>
+            <AlertCircle className="w-12 h-12 text-destructive" />
+            <p className="text-muted-foreground">{error}</p>
+            <Button variant="outline" onClick={() => loadAccounts()}>
               Retry
-            </button>
+            </Button>
           </div>
         ) : accounts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <Linkedin className="w-16 h-16 text-gray-600" />
-            <p className="text-xl font-medium text-white">No LinkedIn accounts</p>
-            <p className="text-gray-400 text-center max-w-md">
+          <div className={emptyStateVariants()}>
+            <Linkedin className="w-16 h-16 text-muted-foreground/50" />
+            <p className="text-xl font-medium">No LinkedIn accounts</p>
+            <p className="text-muted-foreground text-center max-w-md">
               Connect a LinkedIn account to start discovering leads
             </p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#0077B5] to-blue-600 text-white font-medium rounded-lg hover:from-[#0077B5]/90 hover:to-blue-600/90 transition-colors"
-            >
+            <Button onClick={() => setShowAddModal(true)} className="gap-2">
               <PlusCircle className="w-5 h-5" />
               Add Account
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -263,98 +281,92 @@ export function LinkedInAccountsSettings({ onNavigate }: LinkedInAccountsSetting
               const isLoading = actionLoading[account.id];
 
               return (
-                <div
-                  key={account.id}
-                  className="bg-white/5 rounded-xl border border-white/10 overflow-hidden"
-                >
+                <Card key={account.id} className="overflow-hidden">
                   {/* Account Header */}
-                  <div className="p-5">
+                  <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-4">
                         <div className="relative">
-                          {account.profile_image_url ? (
-                            <img
-                              src={account.profile_image_url}
-                              alt={account.name}
-                              className="w-14 h-14 rounded-xl object-cover"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#0077B5] to-blue-600 flex items-center justify-center">
+                          <Avatar className="w-14 h-14 rounded-xl">
+                            <AvatarImage src={account.profile_image_url} alt={account.name} />
+                            <AvatarFallback className="rounded-xl bg-gradient-to-br from-[#0077B5] to-blue-600">
                               <Linkedin className="w-7 h-7 text-white" />
-                            </div>
-                          )}
+                            </AvatarFallback>
+                          </Avatar>
                           <div
-                            className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${statusConfig.bg} flex items-center justify-center`}
+                            className={cn(
+                              'absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center',
+                              statusConfig.bg
+                            )}
                           >
-                            <StatusIcon className={`w-3 h-3 ${statusConfig.color}`} />
+                            <StatusIcon className={cn('w-3 h-3', statusConfig.color)} />
                           </div>
                         </div>
                         <div>
-                          <h3 className="font-semibold text-white text-lg">{account.name}</h3>
-                          <p className="text-gray-400 text-sm">{account.email}</p>
-                          <div className={`flex items-center gap-1.5 text-sm mt-1 ${statusConfig.color}`}>
-                            <span>{statusConfig.label}</span>
-                          </div>
+                          <h3 className="font-semibold text-lg">{account.name}</h3>
+                          <p className="text-muted-foreground text-sm">{account.email}</p>
+                          <Badge variant="outline" className={cn('mt-1 text-xs', statusConfig.color)}>
+                            {statusConfig.label}
+                          </Badge>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         {account.status === 'connected' && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDisconnect(account.id)}
                             disabled={isLoading}
-                            className="px-3 py-1.5 bg-white/5 text-gray-400 rounded-lg hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
                           >
                             Disconnect
-                          </button>
+                          </Button>
                         )}
                         {account.status === 'disconnected' && (
-                          <button
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleReconnect(account.id)}
                             disabled={isLoading}
-                            className="px-3 py-1.5 bg-[#0077B5]/20 text-[#0077B5] rounded-lg hover:bg-[#0077B5]/30 transition-colors disabled:opacity-50"
                           >
                             Reconnect
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDelete(account.id)}
                           disabled={isLoading}
-                          className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                          className="bg-destructive/10 text-destructive hover:bg-destructive/20"
                         >
                           {isLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <Trash2 className="w-4 h-4" />
                           )}
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
                     {/* Quick Stats */}
                     <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="p-3 bg-white/5 rounded-lg">
-                        <p className="text-xs text-gray-400 mb-1">Daily Limit</p>
-                        <p className="font-semibold text-white">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-1">Daily Limit</p>
+                        <p className="font-semibold">
                           {account.rate_limits?.daily_used || 0} / {account.rate_limits?.daily_limit || 100}
                         </p>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-lg">
-                        <p className="text-xs text-gray-400 mb-1">Weekly Limit</p>
-                        <p className="font-semibold text-white">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-1">Weekly Limit</p>
+                        <p className="font-semibold">
                           {account.rate_limits?.weekly_used || 0} / {account.rate_limits?.weekly_limit || 500}
                         </p>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-lg">
-                        <p className="text-xs text-gray-400 mb-1">Warmup Level</p>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-1">Warmup Level</p>
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[#10b981] rounded-full"
-                              style={{ width: `${account.warmup_progress || 0}%` }}
-                            />
-                          </div>
-                          <span className="text-white text-sm font-medium">
+                          <Progress value={account.warmup_progress || 0} className="h-2 flex-1" />
+                          <span className="text-sm font-medium">
                             {account.warmup_progress || 0}%
                           </span>
                         </div>
@@ -362,171 +374,146 @@ export function LinkedInAccountsSettings({ onNavigate }: LinkedInAccountsSetting
                     </div>
 
                     {/* Expand Button */}
-                    <button
-                      onClick={() => setExpandedAccountId(isExpanded ? null : account.id)}
-                      className="flex items-center justify-center w-full pt-3 border-t border-white/10 text-gray-400 hover:text-white transition-colors"
-                    >
-                      {isExpanded ? (
-                        <>
-                          <ChevronUp className="w-4 h-4 mr-1" />
-                          Hide Details
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="w-4 h-4 mr-1" />
-                          Show Details
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Expanded Details */}
-                  {isExpanded && (
-                    <div className="border-t border-white/10 p-5 bg-black/20">
-                      <div className="space-y-6">
-                        {/* Rate Limits Section */}
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-                            <Activity className="w-4 h-4" />
-                            Rate Limits
-                          </h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Daily Actions</p>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${
-                                      (account.rate_limits?.daily_used || 0) / (account.rate_limits?.daily_limit || 100) > 0.8
-                                        ? 'bg-yellow-500'
-                                        : 'bg-[#10b981]'
-                                    }`}
-                                    style={{
-                                      width: `${
-                                        ((account.rate_limits?.daily_used || 0) /
-                                          (account.rate_limits?.daily_limit || 100)) *
-                                        100
-                                      }%`,
-                                    }}
-                                  />
-                                </div>
-                                <span className="text-sm text-white">
-                                  {account.rate_limits?.daily_used || 0}/{account.rate_limits?.daily_limit || 100}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Weekly Actions</p>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${
-                                      (account.rate_limits?.weekly_used || 0) / (account.rate_limits?.weekly_limit || 500) > 0.8
-                                        ? 'bg-yellow-500'
-                                        : 'bg-[#10b981]'
-                                    }`}
-                                    style={{
-                                      width: `${
-                                        ((account.rate_limits?.weekly_used || 0) /
-                                          (account.rate_limits?.weekly_limit || 500)) *
-                                        100
-                                      }%`,
-                                    }}
-                                  />
-                                </div>
-                                <span className="text-sm text-white">
-                                  {account.rate_limits?.weekly_used || 0}/{account.rate_limits?.weekly_limit || 500}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          {account.rate_limits?.reset_at && (
-                            <p className="text-xs text-gray-500 mt-2">
-                              Resets {formatRelativeTime(account.rate_limits.reset_at)}
-                            </p>
+                    <Collapsible open={isExpanded} onOpenChange={() => setExpandedAccountId(isExpanded ? null : account.id)}>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" className="w-full border-t border-border pt-3 rounded-none">
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              Hide Details
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              Show Details
+                            </>
                           )}
-                        </div>
+                        </Button>
+                      </CollapsibleTrigger>
 
-                        {/* Warmup Settings */}
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" />
-                            Warmup Progress
-                          </h4>
-                          <div className="p-4 bg-white/5 rounded-lg">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-gray-400">Progress</span>
-                              <span className="font-medium text-white">
-                                {account.warmup_progress || 0}%
-                              </span>
+                      <CollapsibleContent className="border-t border-border p-5 bg-muted/30">
+                        <div className="space-y-6">
+                          {/* Rate Limits Section */}
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                              <Activity className="w-4 h-4" />
+                              Rate Limits
+                            </h4>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Daily Actions</p>
+                                <div className="flex items-center gap-2">
+                                  <Progress 
+                                    value={((account.rate_limits?.daily_used || 0) / (account.rate_limits?.daily_limit || 100)) * 100}
+                                    className={cn(
+                                      'h-2 flex-1',
+                                      (account.rate_limits?.daily_used || 0) / (account.rate_limits?.daily_limit || 100) > 0.8 && '[&>div]:bg-yellow-500'
+                                    )}
+                                  />
+                                  <span className="text-sm">
+                                    {account.rate_limits?.daily_used || 0}/{account.rate_limits?.daily_limit || 100}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Weekly Actions</p>
+                                <div className="flex items-center gap-2">
+                                  <Progress
+                                    value={((account.rate_limits?.weekly_used || 0) / (account.rate_limits?.weekly_limit || 500)) * 100}
+                                    className={cn(
+                                      'h-2 flex-1',
+                                      (account.rate_limits?.weekly_used || 0) / (account.rate_limits?.weekly_limit || 500) > 0.8 && '[&>div]:bg-yellow-500'
+                                    )}
+                                  />
+                                  <span className="text-sm">
+                                    {account.rate_limits?.weekly_used || 0}/{account.rate_limits?.weekly_limit || 500}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="h-3 bg-white/10 rounded-full overflow-hidden mb-3">
-                              <div
-                                className="h-full bg-gradient-to-r from-[#10b981] to-emerald-400 rounded-full transition-all"
-                                style={{ width: `${account.warmup_progress || 0}%` }}
-                              />
+                            {account.rate_limits?.reset_at && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Resets {formatRelativeTime(account.rate_limits.reset_at)}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Warmup Settings */}
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                              <TrendingUp className="w-4 h-4" />
+                              Warmup Progress
+                            </h4>
+                            <div className="p-4 bg-muted rounded-lg">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-medium">
+                                  {account.warmup_progress || 0}%
+                                </span>
+                              </div>
+                              <Progress value={account.warmup_progress || 0} className="h-3 mb-3" />
+                              <p className="text-xs text-muted-foreground">
+                                {(account.warmup_progress || 0) < 100
+                                  ? 'Account is warming up. Actions are limited to protect your account.'
+                                  : 'Warmup complete! Full action limits are now available.'}
+                              </p>
                             </div>
-                            <p className="text-xs text-gray-500">
-                              {(account.warmup_progress || 0) < 100
-                                ? 'Account is warming up. Actions are limited to protect your account.'
-                                : 'Warmup complete! Full action limits are now available.'}
-                            </p>
+                          </div>
+
+                          {/* Session Info */}
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                              <Shield className="w-4 h-4" />
+                              Session Info
+                            </h4>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">Connected</span>
+                                <span>
+                                  {account.connected_at
+                                    ? formatRelativeTime(account.connected_at)
+                                    : 'Never'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">Last Active</span>
+                                <span>
+                                  {account.last_active_at
+                                    ? formatRelativeTime(account.last_active_at)
+                                    : 'Never'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">TOTP Enabled</span>
+                                <span className={account.totp_enabled ? 'text-primary' : 'text-muted-foreground'}>
+                                  {account.totp_enabled ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">Premium</span>
+                                <span className={account.is_premium ? 'text-yellow-500' : 'text-muted-foreground'}>
+                                  {account.is_premium ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 pt-2">
+                            <Button variant="outline" className="flex-1 gap-2">
+                              <Settings className="w-4 h-4" />
+                              Settings
+                            </Button>
+                            <Button variant="outline" className="gap-2">
+                              <Activity className="w-4 h-4" />
+                              View Activity
+                            </Button>
                           </div>
                         </div>
-
-                        {/* Session Info */}
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-                            <Shield className="w-4 h-4" />
-                            Session Info
-                          </h4>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">Connected</span>
-                              <span className="text-white">
-                                {account.connected_at
-                                  ? formatRelativeTime(account.connected_at)
-                                  : 'Never'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">Last Active</span>
-                              <span className="text-white">
-                                {account.last_active_at
-                                  ? formatRelativeTime(account.last_active_at)
-                                  : 'Never'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">TOTP Enabled</span>
-                              <span className={account.totp_enabled ? 'text-[#10b981]' : 'text-gray-500'}>
-                                {account.totp_enabled ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">Premium</span>
-                              <span className={account.is_premium ? 'text-yellow-400' : 'text-gray-500'}>
-                                {account.is_premium ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 pt-2">
-                          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors">
-                            <Settings className="w-4 h-4" />
-                            Settings
-                          </button>
-                          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors">
-                            <Activity className="w-4 h-4" />
-                            View Activity
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
@@ -534,26 +521,34 @@ export function LinkedInAccountsSettings({ onNavigate }: LinkedInAccountsSetting
       </div>
 
       {/* Add Account Modal */}
-      {showAddModal && (
-        <AddAccountModal
-          onClose={() => setShowAddModal(false)}
-          onAdded={(account) => {
-            setAccounts((prev) => [...prev, account]);
-            setShowAddModal(false);
-          }}
-        />
-      )}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Connect LinkedIn Account</DialogTitle>
+            <DialogDescription>
+              Add your LinkedIn credentials to start discovering leads
+            </DialogDescription>
+          </DialogHeader>
+          <AddAccountModalContent
+            onClose={() => setShowAddModal(false)}
+            onAdded={(account) => {
+              setAccounts((prev) => [...prev, account]);
+              setShowAddModal(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// Add Account Modal Component
-interface AddAccountModalProps {
+// Add Account Modal Content Component
+interface AddAccountModalContentProps {
   onClose: () => void;
   onAdded: (account: LinkedInAccount) => void;
 }
 
-function AddAccountModal({ onClose, onAdded }: AddAccountModalProps) {
+function AddAccountModalContent({ onClose, onAdded }: AddAccountModalContentProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -722,290 +717,246 @@ function AddAccountModal({ onClose, onAdded }: AddAccountModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] rounded-2xl border border-white/10 w-full max-w-md overflow-hidden">
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0077B5] to-blue-600 flex items-center justify-center">
-              <Linkedin className="w-5 h-5 text-white" />
+    <div className="space-y-5">
+      {step === 'credentials' ? (
+        <form onSubmit={handleSubmitCredentials} className="space-y-5">
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive/50 rounded-lg text-destructive text-sm">
+              {error}
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">
-                {step === 'credentials' && 'Connect LinkedIn Account'}
-                {step === 'totp_setup' && '2FA Setup'}
-                {step === 'connecting' && 'Manual Login'}
-              </h2>
-              <p className="text-sm text-gray-400 mt-0.5">
-                {step === 'credentials' && 'Enter your LinkedIn credentials'}
-                {step === 'totp_setup' && 'Complete 2FA setup in LinkedIn'}
-                {step === 'connecting' && 'Log in to LinkedIn manually'}
-              </p>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="linkedin-email">LinkedIn Email</Label>
+            <Input
+              id="linkedin-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="linkedin-password">Password</Label>
+            <div className="relative">
+              <Input
+                id="linkedin-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-0 top-0 h-full"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </Button>
             </div>
           </div>
-        </div>
 
-        {step === 'credentials' ? (
-          <form onSubmit={handleSubmitCredentials} className="p-6 space-y-5">
-            {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
-            )}
+          <div className="space-y-2">
+            <Label htmlFor="totp-secret">TOTP Secret (Optional)</Label>
+            <Input
+              id="totp-secret"
+              type="text"
+              value={totpSecret}
+              onChange={(e) => setTotpSecret(e.target.value)}
+              placeholder="For 2FA accounts"
+            />
+            <p className="text-xs text-muted-foreground">
+              If your account has 2FA enabled, enter your TOTP secret key
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                LinkedIn Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-[#0077B5]/50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-[#0077B5]/50 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                TOTP Secret (Optional)
-              </label>
-              <input
-                type="text"
-                value={totpSecret}
-                onChange={(e) => setTotpSecret(e.target.value)}
-                placeholder="For 2FA accounts"
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-[#0077B5]/50"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                If your account has 2FA enabled, enter your TOTP secret key
-              </p>
-            </div>
-
-            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="text-yellow-400 font-medium">Security Notice</p>
-                  <p className="text-yellow-500/80 mt-1">
-                    Your credentials are encrypted and stored securely. We recommend using an account
-                    created specifically for automation.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#0077B5] to-blue-600 hover:from-[#0077B5]/90 hover:to-blue-600/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Linkedin className="w-4 h-4" />
-                    Connect
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        ) : step === 'totp_setup' ? (
-          <div className="p-6 space-y-5">
-            {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <div className="p-4 bg-[#0077B5]/10 border border-[#0077B5]/30 rounded-lg text-center">
-              <Shield className="w-10 h-10 text-[#0077B5] mx-auto mb-2" />
-              <p className="text-[#0077B5] font-medium">Complete 2FA Setup</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Enter this code in LinkedIn to verify your authenticator
-              </p>
-            </div>
-
-            {/* Live TOTP Code Display */}
-            <div className="relative">
-              <div className="p-6 bg-white/5 border border-white/20 rounded-xl text-center">
-                <p className="text-4xl font-mono font-bold text-white tracking-[0.5em] mb-2">
-                  {totpCode || '------'}
+          <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-yellow-500 font-medium">Security Notice</p>
+                <p className="text-yellow-500/80 mt-1">
+                  Your credentials are encrypted and stored securely. We recommend using an account
+                  created specifically for automation.
                 </p>
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-                  <Clock className="w-4 h-4" />
-                  <span>Expires in {totpSecondsRemaining}s</span>
-                </div>
-                {/* Progress bar */}
-                <div className="mt-3 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#10b981] transition-all duration-1000"
-                    style={{ width: `${(totpSecondsRemaining / 30) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <button
-                onClick={() => copyToClipboard(totpCode)}
-                className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-gray-400 hover:text-white transition-colors"
-                title="Copy code"
-              >
-                <Zap className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <div className="text-sm text-blue-400">
-                <p className="font-medium mb-1">Instructions:</p>
-                <ol className="list-decimal list-inside space-y-1 text-blue-400/80">
-                  <li>Go to LinkedIn → Settings → Security → 2FA</li>
-                  <li>Choose "Authenticator App"</li>
-                  <li>When prompted, enter the code above</li>
-                  <li>Click "Test Connection" when done</li>
-                </ol>
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-col gap-3 pt-2">
-              {connectionStatus === 'success' ? (
-                <div className="p-3 bg-[#10b981]/20 border border-[#10b981]/50 rounded-lg text-center">
-                  <CheckCircle className="w-8 h-8 text-[#10b981] mx-auto mb-2" />
-                  <p className="text-[#10b981] font-medium">Connected Successfully!</p>
-                </div>
-              ) : connectionStatus === 'connecting' ? (
-                <div className="p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg text-center">
-                  <Loader2 className="w-8 h-8 text-blue-400 mx-auto mb-2 animate-spin" />
-                  <p className="text-blue-400">Testing connection...</p>
-                </div>
-              ) : null}
+          <div className="flex items-center gap-3 pt-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving} className="flex-1 gap-2">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Linkedin className="w-4 h-4" />
+                  Connect
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      ) : step === 'totp_setup' ? (
+        <div className="space-y-5">
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive/50 rounded-lg text-destructive text-sm">
+              {error}
+            </div>
+          )}
 
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleComplete}
-                  className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-                >
-                  {connectionStatus === 'success' ? 'Done' : 'Skip for Now'}
-                </button>
-                {connectionStatus !== 'success' && (
-                  <button
-                    type="button"
-                    onClick={handleTestConnection}
-                    disabled={connectionStatus === 'connecting'}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#10b981] to-emerald-600 hover:from-[#10b981]/90 hover:to-emerald-600/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {connectionStatus === 'connecting' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4" />
-                        Test Connection
-                      </>
-                    )}
-                  </button>
-                )}
+          <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg text-center">
+            <Shield className="w-10 h-10 text-blue-500 mx-auto mb-2" />
+            <p className="text-blue-500 font-medium">Complete 2FA Setup</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Enter this code in LinkedIn to verify your authenticator
+            </p>
+          </div>
+
+          {/* Live TOTP Code Display */}
+          <div className="relative">
+            <div className="p-6 bg-muted border border-border rounded-xl text-center">
+              <p className="text-4xl font-mono font-bold tracking-[0.5em] mb-2">
+                {totpCode || '------'}
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span>Expires in {totpSecondsRemaining}s</span>
               </div>
+              <Progress value={(totpSecondsRemaining / 30) * 100} className="mt-3 h-1" />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => copyToClipboard(totpCode)}
+              className="absolute top-2 right-2"
+              title="Copy code"
+            >
+              <Zap className="w-4 h-4" />
+            </Button>
+          </div>
 
-              {connectionStatus === 'failed' && (
-                <button
+          <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div className="text-sm text-blue-500">
+              <p className="font-medium mb-1">Instructions:</p>
+              <ol className="list-decimal list-inside space-y-1 text-blue-500/80">
+                <li>Go to LinkedIn → Settings → Security → 2FA</li>
+                <li>Choose "Authenticator App"</li>
+                <li>When prompted, enter the code above</li>
+                <li>Click "Test Connection" when done</li>
+              </ol>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-2">
+            {connectionStatus === 'success' ? (
+              <div className="p-3 bg-primary/10 border border-primary/50 rounded-lg text-center">
+                <CheckCircle className="w-8 h-8 text-primary mx-auto mb-2" />
+                <p className="text-primary font-medium">Connected Successfully!</p>
+              </div>
+            ) : connectionStatus === 'connecting' ? (
+              <div className="p-3 bg-blue-500/10 border border-blue-500/50 rounded-lg text-center">
+                <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-2 animate-spin" />
+                <p className="text-blue-500">Testing connection...</p>
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="outline" className="flex-1" onClick={handleComplete}>
+                {connectionStatus === 'success' ? 'Done' : 'Skip for Now'}
+              </Button>
+              {connectionStatus !== 'success' && (
+                <Button
                   type="button"
-                  onClick={handleStartManualConnect}
-                  className="w-full px-4 py-2.5 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-lg transition-colors"
+                  onClick={handleTestConnection}
+                  disabled={connectionStatus === 'connecting'}
+                  className="flex-1 gap-2"
                 >
-                  Try Manual Login Instead
-                </button>
+                  {connectionStatus === 'connecting' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4" />
+                      Test Connection
+                    </>
+                  )}
+                </Button>
               )}
             </div>
-          </div>
-        ) : step === 'connecting' ? (
-          <div className="p-6 space-y-5">
-            {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
-            )}
 
-            {liveUrl ? (
-              <>
-                <div className="aspect-video bg-black/50 rounded-lg overflow-hidden border border-white/10">
-                  <iframe
-                    src={liveUrl}
-                    className="w-full h-full"
-                    allow="clipboard-write"
-                    title="LinkedIn Login"
-                  />
-                </div>
-
-                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-sm text-blue-400">
-                  <p className="font-medium mb-1">Log in to LinkedIn in the browser above</p>
-                  <p className="text-blue-400/70">
-                    Complete any security challenges, then click "I'm Done" below.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleFinishManualConnect}
-                    disabled={saving}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#10b981] to-emerald-600 hover:from-[#10b981]/90 hover:to-emerald-600/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        I'm Done
-                      </>
-                    )}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-[#0077B5] mx-auto mb-4" />
-                <p className="text-gray-400">Starting browser session...</p>
-              </div>
+            {connectionStatus === 'failed' && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleStartManualConnect}
+                className="w-full text-orange-500 hover:text-orange-500"
+              >
+                Try Manual Login Instead
+              </Button>
             )}
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : step === 'connecting' ? (
+        <div className="space-y-5">
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive/50 rounded-lg text-destructive text-sm">
+              {error}
+            </div>
+          )}
+
+          {liveUrl ? (
+            <>
+              <div className="aspect-video bg-muted rounded-lg overflow-hidden border border-border">
+                <iframe
+                  src={liveUrl}
+                  className="w-full h-full"
+                  allow="clipboard-write"
+                  title="LinkedIn Login"
+                />
+              </div>
+
+              <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-sm text-blue-500">
+                <p className="font-medium mb-1">Log in to LinkedIn in the browser above</p>
+                <p className="text-blue-500/70">
+                  Complete any security challenges, then click "I'm Done" below.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleFinishManualConnect}
+                  disabled={saving}
+                  className="flex-1 gap-2"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      I'm Done
+                    </>
+                  )}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Starting browser session...</p>
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

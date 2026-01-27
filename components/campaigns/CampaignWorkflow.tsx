@@ -18,6 +18,7 @@ import {
 import type { Campaign } from '@engage/types/campaign-types';
 import { campaignApi } from '@engage/api/campaign-api';
 import { Toaster } from '@/components/ui/sonner';
+import { emptyStateVariants } from '@engage/styles/variants';
 
 interface CampaignWorkflowProps {
   campaign: Campaign;
@@ -127,17 +128,17 @@ export function CampaignWorkflow({ campaign, onUpdate }: CampaignWorkflowProps) 
 
   if (schemasLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--neon-lime)]" />
+      <div className={emptyStateVariants()}>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (schemasError) {
     return (
-      <div className="flex items-center justify-center h-64 text-[var(--hot-pink)]">
-        <AlertCircle className="w-5 h-5 mr-2" />
-        Failed to load workflow configuration
+      <div className={emptyStateVariants()}>
+        <AlertCircle className="w-5 h-5 mr-2 text-destructive" />
+        <span className="text-destructive">Failed to load workflow configuration</span>
       </div>
     );
   }

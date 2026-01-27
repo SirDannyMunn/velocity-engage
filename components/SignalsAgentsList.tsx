@@ -9,7 +9,6 @@ import {
   Play,
   Pause,
   Settings,
-  MoreVertical,
   PlusCircle,
   Loader2,
   AlertCircle,
@@ -19,22 +18,51 @@ import {
   XCircle,
   RefreshCw,
   Trash2,
-  Copy,
   ChevronDown,
   ChevronUp,
   Activity,
-  Calendar,
 } from 'lucide-react';
+import { cn } from '@/components/ui/utils';
 import { leadWatcherApi } from '../api/lead-watcher-api';
 import {
   SignalsAgent,
   AgentStatus,
   SignalType,
-  AGENT_STATUS_COLORS,
   formatSignalType,
   formatRelativeTime,
   IcpProfile,
 } from '../types/lead-watcher-types';
+
+// shadcn components
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+
+// CVA variants
+import { pageHeaderVariants, headerIconVariants, emptyStateVariants, statusBadgeVariants } from '../styles/variants';
 
 interface SignalsAgentsListProps {
   onNavigate?: (page: string) => void;
@@ -147,8 +175,8 @@ export function SignalsAgentsList({ onNavigate }: SignalsAgentsListProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-[#10b981]" />
+      <div className={emptyStateVariants()}>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -156,35 +184,33 @@ export function SignalsAgentsList({ onNavigate }: SignalsAgentsListProps) {
   return (
     <div className="flex-1 flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex-shrink-0 border-b-[0.5px] border-border/15 bg-card/80 backdrop-blur-sm">
+      <div className={pageHeaderVariants()}>
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10b981] to-emerald-600 flex items-center justify-center">
+              <div className={headerIconVariants({ gradient: 'emerald' })}>
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Signals Agents</h1>
-                <p className="text-sm text-gray-400">
+                <h1 className="text-xl font-bold">Signals Agents</h1>
+                <p className="text-sm text-muted-foreground">
                   {agents.length} agents • {agents.filter((a) => a.status === 'active').length} active
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => loadData()}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#10b981] to-emerald-500 hover:from-[#0d9668] hover:to-emerald-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
-              >
+              </Button>
+              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
                 <PlusCircle className="w-5 h-5" />
                 New Agent
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -193,132 +219,141 @@ export function SignalsAgentsList({ onNavigate }: SignalsAgentsListProps) {
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {error ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <AlertCircle className="w-12 h-12 text-red-400" />
-            <p className="text-gray-400">{error}</p>
-            <button
-              onClick={() => loadData()}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
-            >
+          <div className={emptyStateVariants()}>
+            <AlertCircle className="w-12 h-12 text-destructive" />
+            <p className="text-muted-foreground">{error}</p>
+            <Button variant="outline" onClick={() => loadData()}>
               Retry
-            </button>
+            </Button>
           </div>
         ) : agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <Bot className="w-16 h-16 text-gray-600" />
-            <p className="text-xl font-medium text-white">No agents yet</p>
-            <p className="text-gray-400 text-center max-w-md">
+          <div className={emptyStateVariants()}>
+            <Bot className="w-16 h-16 text-muted-foreground/50" />
+            <p className="text-xl font-medium">No agents yet</p>
+            <p className="text-muted-foreground text-center max-w-md">
               Create your first signals agent to start monitoring lead activity
             </p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#10b981] to-emerald-500 hover:from-[#0d9668] hover:to-emerald-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
-            >
+            <Button onClick={() => setShowCreateModal(true)} className="gap-2">
               <PlusCircle className="w-5 h-5" />
               Create Agent
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {agents.map((agent) => {
-              const statusColors = AGENT_STATUS_COLORS[agent.status];
               const isExpanded = expandedAgentId === agent.id;
               const isLoading = actionLoading[agent.id];
+              
+              const statusVariant = agent.status === 'active' ? 'active' :
+                                     agent.status === 'paused' ? 'paused' :
+                                     agent.status === 'error' ? 'archived' : 'new';
 
               return (
-                <div
-                  key={agent.id}
-                  className="bg-white/5 rounded-xl border border-white/10 overflow-hidden"
-                >
+                <Card key={agent.id} className="overflow-hidden">
                   {/* Agent Header */}
-                  <div className="p-5">
+                  <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${statusColors.bg}`}>
-                          <Bot className={`w-6 h-6 ${statusColors.text}`} />
+                        <div className={cn(
+                          'w-12 h-12 rounded-xl flex items-center justify-center',
+                          agent.status === 'active' && 'bg-green-500/10',
+                          agent.status === 'paused' && 'bg-yellow-500/10',
+                          agent.status === 'error' && 'bg-destructive/10',
+                          agent.status === 'idle' && 'bg-muted'
+                        )}>
+                          <Bot className={cn(
+                            'w-6 h-6',
+                            agent.status === 'active' && 'text-green-500',
+                            agent.status === 'paused' && 'text-yellow-500',
+                            agent.status === 'error' && 'text-destructive',
+                            agent.status === 'idle' && 'text-muted-foreground'
+                          )} />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-white">{agent.name}</h3>
-                          <div className={`flex items-center gap-1.5 text-sm ${statusColors.text}`}>
+                          <h3 className="font-semibold">{agent.name}</h3>
+                          <Badge variant="outline" className={cn(statusBadgeVariants({ status: statusVariant }))}>
                             {getStatusIcon(agent.status)}
-                            <span className="capitalize">{agent.status}</span>
-                          </div>
+                            <span className="capitalize ml-1">{agent.status}</span>
+                          </Badge>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         {agent.status === 'active' ? (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handlePause(agent.id)}
                             disabled={isLoading}
-                            className="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition-colors disabled:opacity-50"
+                            className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20"
                           >
                             {isLoading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <Pause className="w-4 h-4" />
                             )}
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleStart(agent.id)}
                             disabled={isLoading}
-                            className="p-2 bg-[#10b981]/20 text-[#10b981] rounded-lg hover:bg-[#10b981]/30 transition-colors disabled:opacity-50"
+                            className="bg-primary/10 text-primary hover:bg-primary/20"
                           >
                             {isLoading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <Play className="w-4 h-4" />
                             )}
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDelete(agent.id)}
                           disabled={isLoading}
-                          className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                          className="bg-destructive/10 text-destructive hover:bg-destructive/20"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
                     {/* Agent Info */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">ICP Profile</span>
-                        <span className="text-white">{getIcpName(agent.icp_profile_id)}</span>
+                        <span className="text-muted-foreground">ICP Profile</span>
+                        <span>{getIcpName(agent.icp_profile_id)}</span>
                       </div>
                       
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Signals Monitoring</span>
+                        <span className="text-muted-foreground">Signals Monitoring</span>
                         <div className="flex flex-wrap gap-1 justify-end">
                           {(agent.signals_config?.enabled_signals || []).slice(0, 3).map((signal) => (
-                            <span
-                              key={signal}
-                              className="px-2 py-0.5 bg-white/10 text-gray-300 rounded text-xs"
-                            >
+                            <Badge key={signal} variant="secondary" className="text-xs">
                               {formatSignalType(signal)}
-                            </span>
+                            </Badge>
                           ))}
                           {(agent.signals_config?.enabled_signals?.length || 0) > 3 && (
-                            <span className="px-2 py-0.5 bg-white/10 text-gray-400 rounded text-xs">
+                            <Badge variant="secondary" className="text-xs">
                               +{(agent.signals_config?.enabled_signals?.length || 0) - 3}
-                            </span>
+                            </Badge>
                           )}
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Leads Generated</span>
-                        <span className="font-medium text-[#10b981]">
+                        <span className="text-muted-foreground">Leads Generated</span>
+                        <span className="font-medium text-primary">
                           {agent.leads_generated?.toLocaleString() || 0}
                         </span>
                       </div>
 
                       {agent.last_run_at && (
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-400">Last Run</span>
-                          <span className="text-gray-300">
+                          <span className="text-muted-foreground">Last Run</span>
+                          <span className="text-muted-foreground">
                             {formatRelativeTime(agent.last_run_at)}
                           </span>
                         </div>
@@ -326,135 +361,137 @@ export function SignalsAgentsList({ onNavigate }: SignalsAgentsListProps) {
                     </div>
 
                     {/* Expand Button */}
-                    <button
-                      onClick={() => setExpandedAgentId(isExpanded ? null : agent.id)}
-                      className="flex items-center justify-center w-full mt-4 pt-3 border-t border-white/10 text-gray-400 hover:text-white transition-colors"
-                    >
-                      {isExpanded ? (
-                        <>
-                          <ChevronUp className="w-4 h-4 mr-1" />
-                          Hide Details
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="w-4 h-4 mr-1" />
-                          Show Details
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Expanded Details */}
-                  {isExpanded && (
-                    <div className="border-t border-white/10 p-5 bg-black/20">
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-400 mb-2">
-                            Enabled Signals
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {(agent.signals_config?.enabled_signals || []).map((signal) => (
-                              <span
-                                key={signal}
-                                className="flex items-center gap-1.5 px-2.5 py-1 bg-white/10 text-gray-300 rounded-lg text-sm"
-                              >
-                                <Zap className="w-3.5 h-3.5 text-yellow-400" />
-                                {formatSignalType(signal)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-400 mb-2">
-                            Configuration
-                          </h4>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">Min Score</span>
-                              <span className="text-white">
-                                {agent.signals_config?.min_score_threshold ?? 40}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">Check Frequency</span>
-                              <span className="text-white">
-                                {agent.signals_config?.check_frequency_hours || 24}h
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">Auto Queue</span>
-                              <span className={agent.signals_config?.auto_queue ? 'text-[#10b981]' : 'text-gray-500'}>
-                                {agent.signals_config?.auto_queue ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                              <span className="text-gray-400">Auto Enrich</span>
-                              <span className={agent.signals_config?.auto_enrich ? 'text-[#10b981]' : 'text-gray-500'}>
-                                {agent.signals_config?.auto_enrich ? 'Yes' : 'No'}
-                              </span>
+                    <Collapsible open={isExpanded} onOpenChange={() => setExpandedAgentId(isExpanded ? null : agent.id)}>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="w-full mt-4 pt-3 border-t border-border"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              Hide Details
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              Show Details
+                            </>
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                  
+                      <CollapsibleContent className="border-t border-border pt-4 mt-4 bg-muted/30 -mx-5 -mb-5 px-5 pb-5">
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                              Enabled Signals
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {(agent.signals_config?.enabled_signals || []).map((signal) => (
+                                <Badge key={signal} variant="outline" className="gap-1.5">
+                                  <Zap className="w-3.5 h-3.5 text-yellow-500" />
+                                  {formatSignalType(signal)}
+                                </Badge>
+                              ))}
                             </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 pt-2">
-                          <button
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-                          >
-                            <Settings className="w-4 h-4" />
-                            Edit Config
-                          </button>
-                          <button
-                            className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-                          >
-                            <Activity className="w-4 h-4" />
-                            View Logs
-                          </button>
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                              Configuration
+                            </h4>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">Min Score</span>
+                                <span>
+                                  {agent.signals_config?.min_score_threshold ?? 40}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">Check Frequency</span>
+                                <span>
+                                  {agent.signals_config?.check_frequency_hours || 24}h
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">Auto Queue</span>
+                                <span className={agent.signals_config?.auto_queue ? 'text-primary' : 'text-muted-foreground'}>
+                                  {agent.signals_config?.auto_queue ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                                <span className="text-muted-foreground">Auto Enrich</span>
+                                <span className={agent.signals_config?.auto_enrich ? 'text-primary' : 'text-muted-foreground'}>
+                                  {agent.signals_config?.auto_enrich ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2">
+                            <Button variant="outline" className="flex-1 gap-2">
+                              <Settings className="w-4 h-4" />
+                              Edit Config
+                            </Button>
+                            <Button variant="outline" className="gap-2">
+                              <Activity className="w-4 h-4" />
+                              View Logs
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
         )}
       </div>
 
-      {/* Create Modal Placeholder - Would be a separate component */}
-      {showCreateModal && (
-        <CreateAgentModal
-          icpProfiles={icpProfiles}
-          signalTypes={SIGNAL_TYPE_OPTIONS}
-          onClose={() => setShowCreateModal(false)}
-          onCreated={(agent) => {
-            setAgents((prev) => [...prev, agent]);
-            setShowCreateModal(false);
-          }}
-        />
-      )}
+      {/* Create Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Signals Agent</DialogTitle>
+            <DialogDescription>
+              Set up a new agent to monitor lead activity
+            </DialogDescription>
+          </DialogHeader>
+          <CreateAgentModalContent
+            icpProfiles={icpProfiles}
+            signalTypes={SIGNAL_TYPE_OPTIONS}
+            onClose={() => setShowCreateModal(false)}
+            onCreated={(agent) => {
+              setAgents((prev) => [...prev, agent]);
+              setShowCreateModal(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// Create Agent Modal Component
-interface CreateAgentModalProps {
+// Create Agent Modal Content Component
+interface CreateAgentModalContentProps {
   icpProfiles: IcpProfile[];
   signalTypes: { value: SignalType; label: string; description: string }[];
   onClose: () => void;
   onCreated: (agent: SignalsAgent) => void;
 }
 
-function CreateAgentModal({
+function CreateAgentModalContent({
   icpProfiles,
   signalTypes,
   onClose,
   onCreated,
-}: CreateAgentModalProps) {
+}: CreateAgentModalContentProps) {
   const [name, setName] = useState('');
   const [icpProfileId, setIcpProfileId] = useState('');
   const [enabledSignals, setEnabledSignals] = useState<SignalType[]>(['post_engagement', 'job_change']);
-  const [minScore, setMinScore] = useState(40);
+  const [minScore, setMinScore] = useState([40]);
   const [autoQueue, setAutoQueue] = useState(true);
   const [autoEnrich, setAutoEnrich] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -483,7 +520,7 @@ function CreateAgentModal({
         icp_profile_id: icpProfileId,
         signals_config: {
           enabled_signals: enabledSignals,
-          min_score_threshold: minScore,
+          min_score_threshold: minScore[0],
           auto_queue: autoQueue,
           auto_enrich: autoEnrich,
         },
@@ -497,172 +534,135 @@ function CreateAgentModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-white/10">
-          <h2 className="text-xl font-bold text-white">Create Signals Agent</h2>
-          <p className="text-sm text-gray-400 mt-1">
-            Set up a new agent to monitor lead activity
-          </p>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="p-3 bg-destructive/10 border border-destructive/50 rounded-lg text-destructive text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Name */}
+      <div className="space-y-2">
+        <Label htmlFor="agent-name">Agent Name *</Label>
+        <Input
+          id="agent-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., Enterprise SaaS Signals"
+        />
+      </div>
+
+      {/* ICP Profile */}
+      <div className="space-y-2">
+        <Label>ICP Profile *</Label>
+        <Select value={icpProfileId} onValueChange={setIcpProfileId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select an ICP profile" />
+          </SelectTrigger>
+          <SelectContent>
+            {icpProfiles.map((profile) => (
+              <SelectItem key={profile.id} value={profile.id}>
+                {profile.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Signal Types */}
+      <div className="space-y-2">
+        <Label>Signals to Monitor *</Label>
+        <div className="grid grid-cols-1 gap-2">
+          {signalTypes.map((signal) => (
+            <button
+              key={signal.value}
+              type="button"
+              onClick={() => toggleSignal(signal.value)}
+              className={cn(
+                'flex items-start gap-3 p-3 rounded-lg border transition-colors text-left',
+                enabledSignals.includes(signal.value)
+                  ? 'bg-primary/10 border-primary/50'
+                  : 'bg-muted border-border hover:border-border/80'
+              )}
+            >
+              <Checkbox
+                checked={enabledSignals.includes(signal.value)}
+                onCheckedChange={() => toggleSignal(signal.value)}
+                className="mt-0.5"
+              />
+              <div>
+                <p className="font-medium">{signal.label}</p>
+                <p className="text-sm text-muted-foreground">{signal.description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Min Score */}
+      <div className="space-y-2">
+        <Label>Minimum Score Threshold: {minScore[0]}</Label>
+        <Slider
+          value={minScore}
+          onValueChange={setMinScore}
+          min={0}
+          max={100}
+          step={5}
+        />
+      </div>
+
+      {/* Options */}
+      <div className="space-y-3">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="auto-queue"
+            checked={autoQueue}
+            onCheckedChange={(checked) => setAutoQueue(!!checked)}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="auto-queue" className="cursor-pointer">
+              Auto-queue high-score leads
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Automatically add leads with signals to daily queue
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Agent Name *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Enterprise SaaS Signals"
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-[#10b981]/50"
-            />
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="auto-enrich"
+            checked={autoEnrich}
+            onCheckedChange={(checked) => setAutoEnrich(!!checked)}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="auto-enrich" className="cursor-pointer">
+              Auto-enrich emails
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Automatically find emails for new leads
+            </p>
           </div>
-
-          {/* ICP Profile */}
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              ICP Profile *
-            </label>
-            <select
-              value={icpProfileId}
-              onChange={(e) => setIcpProfileId(e.target.value)}
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#10b981]/50"
-            >
-              <option value="">Select an ICP profile</option>
-              {icpProfiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Signal Types */}
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Signals to Monitor *
-            </label>
-            <div className="grid grid-cols-1 gap-2">
-              {signalTypes.map((signal) => (
-                <button
-                  key={signal.value}
-                  type="button"
-                  onClick={() => toggleSignal(signal.value)}
-                  className={`flex items-start gap-3 p-3 rounded-lg border transition-colors text-left ${
-                    enabledSignals.includes(signal.value)
-                      ? 'bg-[#10b981]/20 border-[#10b981]/50'
-                      : 'bg-white/5 border-white/10 hover:border-white/20'
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      enabledSignals.includes(signal.value)
-                        ? 'bg-[#10b981] text-black'
-                        : 'bg-white/10 border border-white/20'
-                    }`}
-                  >
-                    {enabledSignals.includes(signal.value) && (
-                      <CheckCircle className="w-3.5 h-3.5" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-white">{signal.label}</p>
-                    <p className="text-sm text-gray-400">{signal.description}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Min Score */}
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Minimum Score Threshold
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={minScore}
-              onChange={(e) => setMinScore(Number(e.target.value))}
-              className="w-full accent-[#10b981]"
-            />
-            <div className="flex justify-between text-sm text-gray-400 mt-1">
-              <span>0</span>
-              <span className="text-[#10b981] font-medium">{minScore}</span>
-              <span>100</span>
-            </div>
-          </div>
-
-          {/* Options */}
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoQueue}
-                onChange={(e) => setAutoQueue(e.target.checked)}
-                className="w-5 h-5 rounded bg-white/5 border-white/20 text-[#10b981] focus:ring-[#10b981]/50"
-              />
-              <div>
-                <p className="text-white">Auto-queue high-score leads</p>
-                <p className="text-sm text-gray-400">
-                  Automatically add leads with signals to daily queue
-                </p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoEnrich}
-                onChange={(e) => setAutoEnrich(e.target.checked)}
-                className="w-5 h-5 rounded bg-white/5 border-white/20 text-[#10b981] focus:ring-[#10b981]/50"
-              />
-              <div>
-                <p className="text-white">Auto-enrich emails</p>
-                <p className="text-sm text-gray-400">
-                  Automatically find emails for new leads
-                </p>
-              </div>
-            </label>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#10b981] to-emerald-500 hover:from-[#0d9668] hover:to-emerald-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  <Bot className="w-5 h-5" />
-                  Create Agent
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
-    </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-3 pt-4">
+        <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={saving} className="flex-1 gap-2">
+          {saving ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              <Bot className="w-5 h-5" />
+              Create Agent
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }
 

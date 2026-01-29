@@ -17,13 +17,11 @@ import {
   ChevronRight,
   Loader2,
   AlertCircle,
-  Search,
-  Filter,
   MoreVertical,
-  Copy,
-  Trash2,
-  Edit2,
+  TrendingUp,
   Zap,
+  Trash2,
+  X,
 } from 'lucide-react';
 import type { Campaign, CampaignStatus } from '@engage/types/campaign-types';
 import type { LinkedInAccount } from '@engage/types/lead-watcher-types';
@@ -36,13 +34,14 @@ import { CampaignSettings } from './CampaignSettings';
 import { CampaignScheduled } from './CampaignScheduled';
 import { CampaignLaunches } from './CampaignLaunches';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/components/ui/utils';
-import { pageHeaderVariants, headerIconVariants, emptyStateVariants } from '@engage/styles/variants';
+import { emptyStateVariants } from '@engage/styles/variants';
 
 type TabId = 'workflow' | 'scheduled' | 'contacts' | 'launches' | 'insights' | 'settings';
 
@@ -77,11 +76,11 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCampaignList, setShowCampaignList] = useState(!campaignId);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'all'>('all');
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [linkedInAccounts, setLinkedInAccounts] = useState<LinkedInAccount[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [selectedCampaigns, setSelectedCampaigns] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const tabs: Tab[] = [
     { id: 'workflow', label: 'Workflow', icon: Workflow },
@@ -200,69 +199,170 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({
     }
   };
 
-  const filteredCampaigns = campaigns.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleToggleCampaignSelection = (campaignId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedCampaigns(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(campaignId)) {
+        newSet.delete(campaignId);
+      } else {
+        newSet.add(campaignId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllCampaigns = () => {
+    if (selectedCampaigns.size === campaigns.length) {
+      setSelectedCampaigns(new Set());
+    } else {
+      setSelectedCampaigns(new Set(campaigns.map(c => c.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedCampaigns.size === 0) return;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedCampaigns.size} campaign${selectedCampaigns.size > 1 ? 's' : ''}? This action cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      setDeleting(true);
+      await campaignApi.bulkDeleteCampaigns(Array.from(selectedCampaigns));
+      setCampaigns(prev => prev.filter(c => !selectedCampaigns.has(c.id)));
+      setSelectedCampaigns(new Set());
+    } catch (err) {
+      console.error('Failed to delete campaigns:', err);
+      setError('Failed to delete campaigns');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedCampaigns(new Set());
+  };
+
+  // Calculate summary stats
+  const totalCampaigns = campaigns.length;
+  const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
+  const totalEnrolled = campaigns.reduce((sum, c) => sum + (c.stats?.total_contacts || 0), 0);
+  const avgResponseRate = campaigns.length > 0
+    ? campaigns.reduce((sum, c) => {
+        const rate = c.stats?.total_contacts > 0 
+          ? (c.stats.replied / c.stats.total_contacts) * 100 
+          : 0;
+        return sum + rate;
+      }, 0) / campaigns.length
+    : 0;
 
   const renderCampaignList = () => (
-    <div className="flex-1 flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex-shrink-0 border-b border-border">
-        <div className="px-6 py-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className={pageHeaderVariants()}>
-                <div className={headerIconVariants()}>
-                  <Zap className="w-6 h-6 text-primary" />
-                </div>
-                Outreach Campaigns
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Automate LinkedIn outreach with AI-powered messaging
-              </p>
-            </div>
-            <Button onClick={handleCreateCampaign} disabled={creating}>
-              {creating ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+    <div className="flex-1 flex flex-col h-full bg-[#fbf9fa] dark:bg-background">
+      {/* Bulk Actions Bar */}
+      {selectedCampaigns.size > 0 && (
+        <div className="flex-shrink-0 px-8 py-3 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Checkbox
+              checked={selectedCampaigns.size === campaigns.length && campaigns.length > 0}
+              onCheckedChange={handleSelectAllCampaigns}
+            />
+            <span className="text-sm font-medium text-foreground">
+              {selectedCampaigns.size} campaign{selectedCampaigns.size > 1 ? 's' : ''} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : (
-                <Plus className="w-5 h-5 mr-2" />
+                <Trash2 className="w-4 h-4 mr-2" />
               )}
-              {creating ? 'Creating...' : 'New Campaign'}
+              Delete Selected
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearSelection}
+            >
+              <X className="w-4 h-4 mr-1" />
+              Clear
             </Button>
           </div>
+        </div>
+      )}
 
-          {/* Search & Filters */}
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search campaigns..."
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              {(['all', 'active', 'paused', 'draft', 'completed'] as const).map((status) => (
-                <Button
-                  key={status}
-                  variant={statusFilter === status ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setStatusFilter(status)}
-                >
-                  {status === 'all' ? 'All' : CAMPAIGN_STATUS_CONFIG[status].label}
-                </Button>
-              ))}
-            </div>
+      {/* Header */}
+      <div className="flex-shrink-0 px-8 pt-8 pb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Campaigns</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Automated outreach workflows for your leads
+            </p>
           </div>
+          <Button onClick={handleCreateCampaign} disabled={creating}>
+            {creating ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            Create Campaign
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div className="flex-shrink-0 px-8 pb-6">
+        <div className="grid grid-cols-4 gap-4">
+          <Card className="bg-card">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">Total Campaigns</span>
+                <Workflow className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold text-foreground">{totalCampaigns}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">Active Campaigns</span>
+                <Play className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-3xl font-bold text-foreground">{activeCampaigns}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">Leads Enrolled</span>
+                <Users className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold text-foreground">{totalEnrolled}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">Avg Response Rate</span>
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-3xl font-bold text-foreground">{avgResponseRate.toFixed(1)}%</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
       {/* Campaign Grid */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto px-8 pb-8">
         {loading ? (
           <div className={emptyStateVariants()}>
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -272,7 +372,7 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({
             <AlertCircle className="w-5 h-5 mr-2 text-destructive" />
             <span className="text-destructive">{error}</span>
           </div>
-        ) : filteredCampaigns.length === 0 ? (
+        ) : campaigns.length === 0 ? (
           <div className={emptyStateVariants()}>
             <Workflow className="w-12 h-12 mb-4 text-muted-foreground" />
             <p className="text-lg font-medium">No campaigns yet</p>
@@ -288,16 +388,18 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({
               ) : (
                 <Plus className="w-4 h-4 mr-2" />
               )}
-              {creating ? 'Creating...' : 'Create Campaign'}
+              Create Campaign
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCampaigns.map((campaign) => (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {campaigns.map((campaign) => (
               <CampaignCard
                 key={campaign.id}
                 campaign={campaign}
                 onClick={() => handleSelectCampaign(campaign)}
+                isSelected={selectedCampaigns.has(campaign.id)}
+                onToggleSelect={(e) => handleToggleCampaignSelection(campaign.id, e)}
               />
             ))}
           </div>
@@ -495,67 +597,140 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({
 };
 
 // Campaign Card Component
-const CampaignCard: React.FC<{ campaign: Campaign; onClick: () => void }> = ({ campaign, onClick }) => {
+interface CampaignCardProps {
+  campaign: Campaign;
+  onClick: () => void;
+  isSelected?: boolean;
+  onToggleSelect?: (e?: React.MouseEvent) => void;
+}
+
+const CampaignCard: React.FC<CampaignCardProps> = ({ 
+  campaign, 
+  onClick, 
+  isSelected = false,
+  onToggleSelect 
+}) => {
   const statusConfig = CAMPAIGN_STATUS_CONFIG[campaign.status];
   const replyRate = campaign.stats.total_contacts > 0
     ? ((campaign.stats.replied / campaign.stats.total_contacts) * 100).toFixed(1)
-    : '0';
+    : '0.0';
+  const stepsCompleted = campaign.stats?.steps_completed || 0;
+  const stepsCount = campaign.steps?.length || 0;
+
+  // Format last run time
+  const formatLastRun = () => {
+    if (!campaign.last_run_at) return 'Never';
+    const date = new Date(campaign.last_run_at);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+    if (diffDays === 1) return '1 day ago';
+    return `${diffDays} days ago`;
+  };
 
   return (
     <Card
       onClick={onClick}
-      className="group cursor-pointer border-0 hover:ring-2 hover:ring-primary/20 transition-all"
+      className={cn(
+        "group cursor-pointer bg-card hover:shadow-md transition-all",
+        isSelected && "ring-2 ring-primary bg-primary/5"
+      )}
     >
       <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-              {campaign.name}
-            </h3>
-            <p className="text-sm text-muted-foreground mt-0.5 truncate">
-              {campaign.description || 'No description'}
-            </p>
+        {/* Header Row */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            {/* Selection Checkbox */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => onToggleSelect?.()}
+                className="mr-1"
+              />
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Workflow className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                {campaign.name}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {stepsCount} step{stepsCount !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+              <DropdownMenuItem>Duplicate</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Status Badge */}
+        <div className="mb-4">
           <Badge variant={statusConfig.variant} className="gap-1.5">
             {campaign.status === 'active' && (
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-current" />
             )}
             {statusConfig.label}
           </Badge>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="text-center p-2 bg-muted rounded-lg">
+        {/* Stats Row */}
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <Users className="w-3 h-3" />
+              Enrolled
+            </div>
             <p className="text-lg font-bold text-foreground">{campaign.stats.total_contacts}</p>
-            <p className="text-xs text-muted-foreground">Contacts</p>
           </div>
-          <div className="text-center p-2 bg-muted rounded-lg">
-            <p className="text-lg font-bold text-primary">{campaign.stats.replied}</p>
-            <p className="text-xs text-muted-foreground">Replies</p>
+          <div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <BarChart3 className="w-3 h-3" />
+              Replies
+            </div>
+            <p className="text-lg font-bold text-foreground">{campaign.stats.replied}</p>
           </div>
-          <div className="text-center p-2 bg-muted rounded-lg">
-            <p className="text-lg font-bold text-accent-foreground">{replyRate}%</p>
-            <p className="text-xs text-muted-foreground">Reply Rate</p>
+          <div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <TrendingUp className="w-3 h-3" />
+              Rate
+            </div>
+            <p className="text-lg font-bold text-foreground">{replyRate}%</p>
           </div>
         </div>
 
-        {/* Steps Preview */}
-        <div className="flex items-center gap-1 overflow-hidden">
-          {(campaign.steps || []).slice(0, 4).map((step, index) => (
-            <React.Fragment key={step.id}>
-              <div className="flex items-center justify-center w-7 h-7 bg-primary/20 rounded-lg flex-shrink-0">
-                <span className="text-xs text-primary">{index + 1}</span>
-              </div>
-              {index < Math.min((campaign.steps || []).length - 1, 3) && (
-                <div className="w-3 h-0.5 bg-primary/30 flex-shrink-0" />
-              )}
-            </React.Fragment>
-          ))}
-          {(campaign.steps || []).length > 4 && (
-            <span className="text-xs text-muted-foreground ml-1">+{(campaign.steps || []).length - 4}</span>
-          )}
+        {/* Progress Bar */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+            <span>Steps Completed</span>
+            <span className="font-medium text-foreground">{stepsCompleted}</span>
+          </div>
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all"
+              style={{ width: stepsCompleted > 0 ? '100%' : '0%' }}
+            />
+          </div>
         </div>
+
+        {/* Last Run */}
+        <p className="text-xs text-muted-foreground">
+          Last run: {formatLastRun()}
+        </p>
       </CardContent>
     </Card>
   );

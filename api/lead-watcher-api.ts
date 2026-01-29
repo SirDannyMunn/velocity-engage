@@ -43,6 +43,7 @@ import {
 } from '../types/lead-watcher-types';
 
 const LEAD_WATCHER_PREFIX = '/lead-watcher';
+const LEAD_OUTREACH_PREFIX = '/lead-outreach';
 
 export const leadWatcherApi = {
   // ============================================================================
@@ -274,11 +275,11 @@ export const leadWatcherApi = {
   // ============================================================================
 
   async listLinkedInAccounts(params?: { organization_id?: string }): Promise<LinkedInAccountsListResponse> {
-    return httpClient.get(`${LEAD_WATCHER_PREFIX}/linkedin-accounts`, { params });
+    return httpClient.get(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts`, { params });
   },
 
   async getLinkedInAccount(id: string): Promise<LinkedInAccountResponse> {
-    return httpClient.get(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}`);
+    return httpClient.get(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}`);
   },
 
   async createLinkedInAccount(data: { 
@@ -287,55 +288,55 @@ export const leadWatcherApi = {
     display_name?: string;
     totp_secret?: string;
   }): Promise<LinkedInAccountResponse> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts`, data);
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts`, data);
   },
 
   async updateLinkedInAccount(id: string, data: { display_name?: string }): Promise<LinkedInAccountResponse> {
-    return httpClient.patch(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}`, data);
+    return httpClient.patch(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}`, data);
   },
 
   async deleteLinkedInAccount(id: string): Promise<void> {
-    return httpClient.delete(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}`);
+    return httpClient.delete(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}`);
   },
 
   async connectLinkedInAccount(id: string, credentials: LinkedInAccountCredentials): Promise<LinkedInAccountResponse> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/connect`, credentials);
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/connect`, credentials);
   },
 
   async disconnectLinkedInAccount(id: string): Promise<LinkedInAccountResponse> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/disconnect`);
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/disconnect`);
   },
 
   async storeTotpSecret(id: string, totpSecret: string): Promise<LinkedInAccountResponse> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/totp`, { totp_secret: totpSecret });
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/totp`, { totp_secret: totpSecret });
   },
 
   async getTotpCode(id: string): Promise<{ code: string; valid_for_seconds: number }> {
-    return httpClient.get(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/totp-code`);
+    return httpClient.get(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/totp-code`);
   },
 
   async startManualConnect(id: string): Promise<{ session_id: string; live_url: string; expires_at: string }> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/manual-connect/start`);
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/manual-connect/start`);
   },
 
   async confirmManualConnect(id: string): Promise<{ success: boolean; message: string }> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/manual-connect/confirm`);
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/manual-connect/confirm`);
   },
 
   async getLinkedInRateLimits(id: string): Promise<{ data: LinkedInAccount['rate_limit'] }> {
-    return httpClient.get(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/rate-limits`);
+    return httpClient.get(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/rate-limits`);
   },
 
   async resetLinkedInRateLimits(id: string): Promise<{ data: LinkedInAccount['rate_limit'] }> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/rate-limits/reset`);
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/rate-limits/reset`);
   },
 
   async startLinkedInWarmup(id: string): Promise<LinkedInAccountResponse> {
-    return httpClient.post(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/warmup/start`);
+    return httpClient.post(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/warmup/start`);
   },
 
   async getLinkedInWarmupProgress(id: string): Promise<{ data: { progress: number; status: string; days_remaining: number } }> {
-    return httpClient.get(`${LEAD_WATCHER_PREFIX}/linkedin-accounts/${id}/warmup/progress`);
+    return httpClient.get(`${LEAD_OUTREACH_PREFIX}/linkedin-accounts/${id}/warmup/progress`);
   },
 
   // ============================================================================

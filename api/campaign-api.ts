@@ -19,7 +19,7 @@ import type {
   MessageTemplate,
 } from '../types/campaign-types';
 
-const CAMPAIGNS_PREFIX = '/lead-watcher/campaigns';
+const CAMPAIGNS_PREFIX = '/lead-outreach/campaigns';
 
 export const campaignApi = {
   // ============================================================================
@@ -44,6 +44,10 @@ export const campaignApi = {
 
   async deleteCampaign(id: string): Promise<{ message: string }> {
     return httpClient.delete(`${CAMPAIGNS_PREFIX}/${id}`);
+  },
+
+  async bulkDeleteCampaigns(ids: string[]): Promise<{ message: string; deleted: number }> {
+    return httpClient.post(`${CAMPAIGNS_PREFIX}/bulk-delete`, { campaign_ids: ids });
   },
 
   async duplicateCampaign(id: string, name?: string): Promise<CampaignResponse> {

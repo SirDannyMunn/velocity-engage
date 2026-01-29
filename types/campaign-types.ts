@@ -8,7 +8,22 @@
 // ============================================================================
 
 export type CampaignStatus = 'draft' | 'active' | 'paused' | 'completed' | 'archived';
-export type StepType = 'invitation' | 'message' | 'email' | 'wait' | 'condition';
+export type StepType = 
+  | 'invitation' 
+  | 'message' 
+  | 'email' 
+  | 'wait' 
+  | 'condition'
+  // LinkedIn orchestrator tasks
+  | 'linkedin_check_session'
+  | 'linkedin_login'
+  | 'linkedin_view_profile'
+  | 'linkedin_send_connection'
+  | 'linkedin_send_message'
+  | 'linkedin_search_leads'
+  | 'conditional'
+  | 'record_interaction';
+
 export type StepStatus = 'pending' | 'active' | 'completed' | 'skipped';
 export type ContactCampaignStatus = 'queued' | 'in_progress' | 'replied' | 'completed' | 'failed' | 'unsubscribed';
 
@@ -26,6 +41,15 @@ export const STEP_TYPE_CONFIG: Record<StepType, { label: string; icon: string; c
   email: { label: 'Send Email', icon: 'Mail', color: 'text-cyan-400' },
   wait: { label: 'Wait', icon: 'Clock', color: 'text-amber-400' },
   condition: { label: 'Condition', icon: 'GitBranch', color: 'text-pink-400' },
+  // LinkedIn orchestrator tasks
+  linkedin_check_session: { label: 'Check LinkedIn Session', icon: 'KeyRound', color: 'text-blue-400' },
+  linkedin_login: { label: 'LinkedIn Login', icon: 'LogIn', color: 'text-blue-400' },
+  linkedin_view_profile: { label: 'View Profile', icon: 'Eye', color: 'text-green-400' },
+  linkedin_send_connection: { label: 'Send Connection', icon: 'UserPlus', color: 'text-blue-400' },
+  linkedin_send_message: { label: 'Send LinkedIn Message', icon: 'MessageCircle', color: 'text-purple-400' },
+  linkedin_search_leads: { label: 'Search Leads', icon: 'Search', color: 'text-cyan-400' },
+  conditional: { label: 'Conditional', icon: 'GitBranch', color: 'text-pink-400' },
+  record_interaction: { label: 'Record Interaction', icon: 'FileText', color: 'text-zinc-400' },
 };
 
 // ============================================================================

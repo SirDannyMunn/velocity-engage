@@ -468,7 +468,7 @@ export function LeadsList({ onNavigate }: LeadsListProps) {
             </p>
           </div>
         ) : (
-          <Table>
+          <Table size="sm">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
